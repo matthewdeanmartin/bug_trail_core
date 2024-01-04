@@ -3,10 +3,17 @@ Configuration module for Bug Trail.
 """
 import os
 from dataclasses import dataclass
+
 try:
-    import tomllib as toml
+    import tomllib
+
+    USE_TOMLLIB = True
 except ImportError:
+    USE_TOMLLIB = False
+try:
     import toml
+except ImportError:
+    pass
 from platformdirs import user_config_dir, user_data_dir
 
 
@@ -31,8 +38,13 @@ def read_config(config_path: str) -> BugTrailConfig:
         BugTrailConfig: Configuration object for Bug Trail.
     """
     # Read the TOML file
+
     try:
-        bug_trail_config = toml.load(config_path)
+        if USE_TOMLLIB:
+            with open(config_path, "rb") as handle:
+                bug_trail_config = tomllib.load(handle)
+        else:
+            bug_trail_config = toml.load(config_path)
     # toml and tomllib raise different errors
     except BaseException:
         bug_trail_config = {}
@@ -56,6 +68,7 @@ def read_config(config_path: str) -> BugTrailConfig:
 
 
 if __name__ == "__main__":
+
     def run() -> None:
         """Example usage"""
         config = read_config("../pyproject.toml")

@@ -2,13 +2,14 @@
 Another module to avoid Circular Import
 """
 import datetime
-try:
-    from types import NoneType
-except ImportError:
-    # Python 3.9 support.
-    NoneType = type(None)
-
 from typing import Any, Optional, Union
+
+# try:
+#     from types import NoneType
+# except ImportError:
+#     # Python 3.9 support.
+#     NoneType = type(None)
+
 
 SqliteTypes = Union[None, int, float, str, bytes, datetime.date, datetime.datetime]
 
@@ -22,7 +23,9 @@ def serialize_to_sqlite_supported(value: Optional[Any]) -> SqliteTypes:
     >>> serialize_to_sqlite_supported(1.0)
     1.0
     """
-    if isinstance(value, NoneType):
+    # if isinstance(value, NoneType):
+    #     return None
+    if value is None:
         return None
     if isinstance(value, (int, float, str, bytes)):
         return value
