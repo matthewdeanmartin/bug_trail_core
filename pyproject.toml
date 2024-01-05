@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bug_trail_core"
-version = "1.0.1"
+version = "2.0.0"
 description = "Local static html error logger to use while developing python code."
 authors = ["Matthew Martin <matthewdeanmartin@gmail.com>"]
 keywords = ["error logging", "html log report", ]
