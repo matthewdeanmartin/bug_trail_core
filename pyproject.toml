@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bug_trail_core"
-version = "2.0.0"
+version = "2.1.0"
 description = "Local static html error logger to use while developing python code."
 authors = ["Matthew Martin <matthewdeanmartin@gmail.com>"]
 keywords = ["error logging", "html log report", ]
@@ -17,6 +17,7 @@ classifiers = [
 ]
 include = [
     "bug_trail_core/**/*.py",
+    "bug_trail_core/**/*.sql",
     "bug_trail_core/**/*.md",
     "bug_trail_core/**/*.txt",
     "bug_trail_core/**/*.html",
@@ -44,6 +45,9 @@ python = ">=3.9"
 # Config
 toml = { version = "*", python = "<3.11" }
 platformdirs="*"
+
+# Gather system info
+psutil = "*"
 
 # Logging frameworks
 # Required until I figure out how to make it optional

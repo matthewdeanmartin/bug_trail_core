@@ -16,6 +16,7 @@ except ImportError:
     pass
 import platformdirs
 
+
 @dataclass
 class BugTrailConfig:
     app_name: str

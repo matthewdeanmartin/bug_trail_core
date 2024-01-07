@@ -23,7 +23,7 @@
 </header>
 <section id="section-intro">
 <p>Captures error logs to sqlite. Compansion CLI tool generates a static website.</p>
-<p>Install bug_trail_core to your application. Pipx install bug_trail to avoid depencency
+<p>Install bug_trail_core to your application. Pipx install bug_trail to avoid dependency
 conflicts</p>
 <details class="source">
 <summary>
@@ -32,7 +32,7 @@ conflicts</p>
 <pre><code class="python">&#34;&#34;&#34;
 Captures error logs to sqlite. Compansion CLI tool generates a static website.
 
-Install bug_trail_core to your application. Pipx install bug_trail to avoid depencency
+Install bug_trail_core to your application. Pipx install bug_trail to avoid dependency
 conflicts
 &#34;&#34;&#34;
 
@@ -50,6 +50,14 @@ __all__ = [&#34;BugTrailHandler&#34;, &#34;PicoBugTrailHandler&#34;, &#34;read_c
 <dd>
 <div class="desc"><p>Configuration module for Bug Trail.</p></div>
 </dd>
+<dt><code class="name"><a title="bug_trail_core.exceptions" href="exceptions.html">bug_trail_core.exceptions</a></code></dt>
+<dd>
+<div class="desc"><p>Record type, instance and call stack info about an exception.</p></div>
+</dd>
+<dt><code class="name"><a title="bug_trail_core.generate_sql" href="generate_sql.html">bug_trail_core.generate_sql</a></code></dt>
+<dd>
+<div class="desc"><p>Code to generate sql for table.</p></div>
+</dd>
 <dt><code class="name"><a title="bug_trail_core.handlers" href="handlers.html">bug_trail_core.handlers</a></code></dt>
 <dd>
 <div class="desc"><p>This module contains custom logging handlers.</p></div>
@@ -57,6 +65,14 @@ __all__ = [&#34;BugTrailHandler&#34;, &#34;PicoBugTrailHandler&#34;, &#34;read_c
 <dt><code class="name"><a title="bug_trail_core.sqlite3_utils" href="sqlite3_utils.html">bug_trail_core.sqlite3_utils</a></code></dt>
 <dd>
 <div class="desc"><p>Another module to avoid Circular Import</p></div>
+</dd>
+<dt><code class="name"><a title="bug_trail_core.system_info" href="system_info.html">bug_trail_core.system_info</a></code></dt>
+<dd>
+<div class="desc"></div>
+</dd>
+<dt><code class="name"><a title="bug_trail_core.venv_info" href="venv_info.html">bug_trail_core.venv_info</a></code></dt>
+<dd>
+<div class="desc"></div>
 </dd>
 </dl>
 </section>
@@ -95,13 +111,15 @@ __all__ = [&#34;BugTrailHandler&#34;, &#34;PicoBugTrailHandler&#34;, &#34;read_c
         BugTrailConfig: Configuration object for Bug Trail.
     &#34;&#34;&#34;
     # Read the TOML file
-    try:
-        bug_trail_config = toml.load(config_path)
 
-    except (FileNotFoundError, toml.TomlDecodeError):
-        bug_trail_config = {}
-    except TypeError:
-        # print(f&#34;Error reading config file: {e}&#34;)
+    try:
+        if USE_TOMLLIB:
+            with open(config_path, &#34;rb&#34;) as handle:
+                bug_trail_config = tomllib.load(handle)
+        else:
+            bug_trail_config = toml.load(config_path)
+    # toml and tomllib raise different errors
+    except BaseException:
         bug_trail_config = {}
 
     section = bug_trail_config.get(&#34;tool&#34;, {}).get(&#34;bug_trail&#34;, {})
@@ -110,8 +128,8 @@ __all__ = [&#34;BugTrailHandler&#34;, &#34;PicoBugTrailHandler&#34;, &#34;read_c
     app_name = section.get(&#34;app_name&#34;, &#34;bug_trail&#34;)
     app_author = section.get(&#34;app_author&#34;, &#34;bug_trail&#34;)
 
-    default_data_dir = user_data_dir(&#34;bug_trail&#34;, app_author, ensure_exists=True)
-    default_config_dir = user_config_dir(&#34;bug_trail&#34;, app_author, ensure_exists=True)
+    default_data_dir = platformdirs.user_data_dir(app_name, app_author, ensure_exists=True)
+    default_config_dir = platformdirs.user_config_dir(app_name, app_author, ensure_exists=True)
 
     report_folder = section.get(&#34;report_folder&#34;, os.path.join(default_data_dir, &#34;reports&#34;))
     database_path = section.get(&#34;database_path&#34;, os.path.join(default_config_dir, &#34;bug_trail.db&#34;))
@@ -381,8 +399,12 @@ class BugTrailConfig:
 <li><h3><a href="#header-submodules">Sub-modules</a></h3>
 <ul>
 <li><code><a title="bug_trail_core.config" href="config.html">bug_trail_core.config</a></code></li>
+<li><code><a title="bug_trail_core.exceptions" href="exceptions.html">bug_trail_core.exceptions</a></code></li>
+<li><code><a title="bug_trail_core.generate_sql" href="generate_sql.html">bug_trail_core.generate_sql</a></code></li>
 <li><code><a title="bug_trail_core.handlers" href="handlers.html">bug_trail_core.handlers</a></code></li>
 <li><code><a title="bug_trail_core.sqlite3_utils" href="sqlite3_utils.html">bug_trail_core.sqlite3_utils</a></code></li>
+<li><code><a title="bug_trail_core.system_info" href="system_info.html">bug_trail_core.system_info</a></code></li>
+<li><code><a title="bug_trail_core.venv_info" href="venv_info.html">bug_trail_core.venv_info</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>

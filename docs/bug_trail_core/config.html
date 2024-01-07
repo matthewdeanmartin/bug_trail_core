@@ -33,8 +33,17 @@ Configuration module for Bug Trail.
 import os
 from dataclasses import dataclass
 
-import toml
-from platformdirs import user_config_dir, user_data_dir
+try:
+    import tomllib
+
+    USE_TOMLLIB = True
+except ImportError:
+    USE_TOMLLIB = False
+try:
+    import toml
+except ImportError:
+    pass
+import platformdirs
 
 
 @dataclass
@@ -58,13 +67,15 @@ def read_config(config_path: str) -&gt; BugTrailConfig:
         BugTrailConfig: Configuration object for Bug Trail.
     &#34;&#34;&#34;
     # Read the TOML file
-    try:
-        bug_trail_config = toml.load(config_path)
 
-    except (FileNotFoundError, toml.TomlDecodeError):
-        bug_trail_config = {}
-    except TypeError:
-        # print(f&#34;Error reading config file: {e}&#34;)
+    try:
+        if USE_TOMLLIB:
+            with open(config_path, &#34;rb&#34;) as handle:
+                bug_trail_config = tomllib.load(handle)
+        else:
+            bug_trail_config = toml.load(config_path)
+    # toml and tomllib raise different errors
+    except BaseException:
         bug_trail_config = {}
 
     section = bug_trail_config.get(&#34;tool&#34;, {}).get(&#34;bug_trail&#34;, {})
@@ -73,8 +84,8 @@ def read_config(config_path: str) -&gt; BugTrailConfig:
     app_name = section.get(&#34;app_name&#34;, &#34;bug_trail&#34;)
     app_author = section.get(&#34;app_author&#34;, &#34;bug_trail&#34;)
 
-    default_data_dir = user_data_dir(&#34;bug_trail&#34;, app_author, ensure_exists=True)
-    default_config_dir = user_config_dir(&#34;bug_trail&#34;, app_author, ensure_exists=True)
+    default_data_dir = platformdirs.user_data_dir(app_name, app_author, ensure_exists=True)
+    default_config_dir = platformdirs.user_config_dir(app_name, app_author, ensure_exists=True)
 
     report_folder = section.get(&#34;report_folder&#34;, os.path.join(default_data_dir, &#34;reports&#34;))
     database_path = section.get(&#34;database_path&#34;, os.path.join(default_config_dir, &#34;bug_trail.db&#34;))
@@ -132,13 +143,15 @@ if __name__ == &#34;__main__&#34;:
         BugTrailConfig: Configuration object for Bug Trail.
     &#34;&#34;&#34;
     # Read the TOML file
-    try:
-        bug_trail_config = toml.load(config_path)
 
-    except (FileNotFoundError, toml.TomlDecodeError):
-        bug_trail_config = {}
-    except TypeError:
-        # print(f&#34;Error reading config file: {e}&#34;)
+    try:
+        if USE_TOMLLIB:
+            with open(config_path, &#34;rb&#34;) as handle:
+                bug_trail_config = tomllib.load(handle)
+        else:
+            bug_trail_config = toml.load(config_path)
+    # toml and tomllib raise different errors
+    except BaseException:
         bug_trail_config = {}
 
     section = bug_trail_config.get(&#34;tool&#34;, {}).get(&#34;bug_trail&#34;, {})
@@ -147,8 +160,8 @@ if __name__ == &#34;__main__&#34;:
     app_name = section.get(&#34;app_name&#34;, &#34;bug_trail&#34;)
     app_author = section.get(&#34;app_author&#34;, &#34;bug_trail&#34;)
 
-    default_data_dir = user_data_dir(&#34;bug_trail&#34;, app_author, ensure_exists=True)
-    default_config_dir = user_config_dir(&#34;bug_trail&#34;, app_author, ensure_exists=True)
+    default_data_dir = platformdirs.user_data_dir(app_name, app_author, ensure_exists=True)
+    default_config_dir = platformdirs.user_config_dir(app_name, app_author, ensure_exists=True)
 
     report_folder = section.get(&#34;report_folder&#34;, os.path.join(default_data_dir, &#34;reports&#34;))
     database_path = section.get(&#34;database_path&#34;, os.path.join(default_config_dir, &#34;bug_trail.db&#34;))

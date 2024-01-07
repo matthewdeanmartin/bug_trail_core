@@ -4,9 +4,20 @@ This module contains custom logging handlers.
 import logging
 import sqlite3
 import traceback
+from importlib.resources import as_file, files
 from typing import Any, Optional
 
+from bug_trail_core.exceptions import (
+    create_exception_instance_table,
+    create_exception_type_table,
+    create_traceback_info_table,
+    insert_exception_instance,
+    insert_exception_type,
+    insert_traceback_info,
+)
 from bug_trail_core.sqlite3_utils import serialize_to_sqlite_supported
+from bug_trail_core.system_info import create_system_info_table, record_system_info
+from bug_trail_core.venv_info import create_python_libraries_table, record_venv_info
 
 try:
     import picologging
@@ -38,9 +49,18 @@ class BaseErrorLogHandler:
         self.field_names = ""
         # call things only after all attributes assigned
         self.reopen()
-        # self.create_table()
+        self.create_table()
 
-    def reopen(self):
+        create_exception_type_table(self.conn)
+        create_exception_instance_table(self.conn)
+        create_traceback_info_table(self.conn)
+
+        create_system_info_table(self.conn)
+        record_system_info(self.conn)
+        create_python_libraries_table(self.conn)
+        record_venv_info(self.conn)
+
+    def reopen(self) -> None:
         """Reopen the connection"""
         self.conn = sqlite3.connect(self.db_path)
         self.conn.execute("PRAGMA journal_mode = MEMORY;")
@@ -50,6 +70,12 @@ class BaseErrorLogHandler:
         """
         Create the logs table if it doesn't exist
         """
+        # Locate the resource file
+        source = files("bug_trail_core").joinpath("create_table.sql")
+
+        with as_file(source) as file:
+            self.create_table_sql = file.read_text(encoding="utf-8")
+
         if not self.create_table_sql:
             # Create a dummy LogRecord to introspect its attributes
             dummy_record = None
@@ -110,24 +136,26 @@ class BaseErrorLogHandler:
             return
         # Check if there is exception information
         if record.exc_info:
+            exception_type, exception, traceback_object = record.exc_info
             # Format the traceback
             traceback_str = "".join(traceback.format_exception(*record.exc_info))
             record.traceback = traceback_str
 
-            # traceback_info = record.exc_info[2]
-            # locals = None
-            # if traceback_info.tb_next:
-            #     locals = traceback_info.tb_next.tb_frame.f_locals
-            # else:
-            #     locals = traceback_info.tb_frame.f_locals
-            # print(locals)
-            # TODO: do something with the traceback
-            # exception_type, exception, traceback_object = record.exc_info
-            # print(exception_type, exception, traceback_object)
+            if exception:
+                insert_exception_type(self.conn, exception)
+                insert_exception_instance(self.conn, exception)
+                cursor = self.conn.cursor()
+                cursor.execute("SELECT last_insert_rowid()")
+                exception_instance_id = cursor.fetchone()[0]
+                # Insert traceback info
+                if exception and exception.__traceback__:
+                    insert_traceback_info(self.conn, exception_instance_id, exception.__traceback__)
         else:
             record.traceback = None
 
         if not self.formatted_sql:
+            # I don't think I can precalc this in advance as the fields in a Record
+            # can change subtly from call to call.
             insert_sql = "INSERT INTO logs ({fields}) VALUES ({values})"
             self.field_names = ", ".join(
                 [attr for attr in dir(record) if not attr.startswith("__") and not attr == "getMessage"]
@@ -231,10 +259,6 @@ class BugTrailHandler(logging.Handler):
         """
         self.base_handler.close()
         super().close()
-
-
-# mypyc didn't like this
-# if pico_available:
 
 
 class PicoBugTrailHandler(picologging.Handler):
