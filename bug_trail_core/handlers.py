@@ -4,6 +4,7 @@ This module contains custom logging handlers.
 import logging
 import sqlite3
 import traceback
+import uuid
 from importlib.resources import as_file, files
 from typing import Any, Optional
 
@@ -134,6 +135,9 @@ class BaseErrorLogHandler:
         """
         if record.levelno < self.minimum_level:
             return
+
+        # clientside primary key
+        record_id = str(uuid.uuid4())
         # Check if there is exception information
         if record.exc_info:
             exception_type, exception, traceback_object = record.exc_info
@@ -142,11 +146,11 @@ class BaseErrorLogHandler:
             record.traceback = traceback_str
 
             if exception:
+                # not unique per log entry
                 insert_exception_type(self.conn, exception)
-                insert_exception_instance(self.conn, exception)
-                cursor = self.conn.cursor()
-                cursor.execute("SELECT last_insert_rowid()")
-                exception_instance_id = cursor.fetchone()[0]
+                # unique per log entry
+                insert_exception_instance(self.conn, record_id, exception)
+                exception_instance_id = record_id
                 # Insert traceback info
                 if exception and exception.__traceback__:
                     insert_traceback_info(self.conn, exception_instance_id, exception.__traceback__)
@@ -162,8 +166,8 @@ class BaseErrorLogHandler:
             )
             self.field_names = self.field_names + ", traceback, message"
             field_values = ", ".join(["?" for _ in self.field_names.split(", ")])
-            self.formatted_sql = insert_sql.format(fields=self.field_names, values=field_values)
-        args = [getattr(record, field, "") for field in self.field_names.split(", ")]
+            self.formatted_sql = insert_sql.format(fields="record_id," + self.field_names, values="?," + field_values)
+        args = [record_id] + [getattr(record, field, "") for field in self.field_names.split(", ")]
         args = [serialize_to_sqlite_supported(arg) for arg in args]
 
         self.safe_execute(self.formatted_sql, args)

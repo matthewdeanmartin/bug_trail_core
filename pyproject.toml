@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "bug_trail_core"
-version = "2.1.0"
+version = "2.2.0"
 description = "Local static html error logger to use while developing python code."
 authors = ["Matthew Martin <matthewdeanmartin@gmail.com>"]
 keywords = ["error logging", "html log report", ]
@@ -229,7 +229,8 @@ exclude_also = [
     ]
 
 [tool.bug_trail]
-app_name= "myapp"
-app_author= "myname"
+# Database in app_author/app_name/bug_trail.db
+app_author= "bug_trail"
+app_name= "bug_trail"
 source_folder = "fish_tank"
 ctags_file = "fish_tank.tags"

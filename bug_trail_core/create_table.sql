@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS logs
 (
+    record_id TEXT PRIMARY KEY,
     args            TEXT,
     asctime         TEXT,
     created         REAL,

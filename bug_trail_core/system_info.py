@@ -1,6 +1,5 @@
 import json
 import platform
-import sqlite3
 from collections.abc import Sequence
 
 import psutil
@@ -79,18 +78,9 @@ if __name__ == "__main__":
             print(f"{key}: {value}")
 
 
-def create_connection(db_file):
-    conn = None
-    try:
-        conn = sqlite3.connect(db_file)
-    except sqlite3.Error as e:
-        print(e)
-    return conn
-
-
 def create_system_info_table(conn):
     sql_create_table = """CREATE TABLE IF NOT EXISTS system_info (
-                              id INTEGER PRIMARY KEY,
+                              id TEXT PRIMARY KEY,
                               snapshot_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                               total_memory TEXT,
                               available_memory TEXT,
@@ -104,11 +94,8 @@ def create_system_info_table(conn):
                               os_version TEXT,
                               windows_info TEXT
                           );"""
-    try:
-        cursor = conn.cursor()
-        cursor.execute(sql_create_table)
-    except sqlite3.Error as e:
-        print(e)
+    cursor = conn.cursor()
+    cursor.execute(sql_create_table)
 
 
 def insert_system_info(conn, info):
@@ -117,27 +104,25 @@ def insert_system_info(conn, info):
                           total_disk_space, available_disk_space, os_platform, os_release, 
                           os_architecture, os_version, windows_info) 
                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"""
-    try:
-        cursor = conn.cursor()
-        cursor.execute(
-            sql_insert_info,
-            (
-                info["Total Memory"],
-                info["Available Memory"],
-                info["CPU Frequency"],
-                info["CPU Cores"],
-                info["Total Disk Space"],
-                info["Available Disk Space"],
-                info["Operating System Summary"]["Platform (sysname)"],
-                info["Operating System Summary"]["Release"],
-                info["Operating System Summary"]["Architecture"],
-                info["Operating System Summary"]["Version"],
-                json.dumps(info["Operating System Summary"]["Windows Info"]),  # Store as JSON string
-            ),
-        )
-        conn.commit()
-    except sqlite3.Error as e:
-        print(e)
+
+    cursor = conn.cursor()
+    cursor.execute(
+        sql_insert_info,
+        (
+            info["Total Memory"],
+            info["Available Memory"],
+            info["CPU Frequency"],
+            info["CPU Cores"],
+            info["Total Disk Space"],
+            info["Available Disk Space"],
+            info["Operating System Summary"]["Platform (sysname)"],
+            info["Operating System Summary"]["Release"],
+            info["Operating System Summary"]["Architecture"],
+            info["Operating System Summary"]["Version"],
+            json.dumps(info["Operating System Summary"]["Windows Info"]),  # Store as JSON string
+        ),
+    )
+    conn.commit()
 
 
 def record_system_info(conn):

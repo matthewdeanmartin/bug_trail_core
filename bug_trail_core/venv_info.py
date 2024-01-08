@@ -1,9 +1,10 @@
 import importlib.metadata
 import json
 import sqlite3
+import uuid
+from collections.abc import Generator
 from importlib.metadata import PackageMetadata
 from typing import cast
-from collections.abc import Generator
 
 
 def create_connection(db_file: str) -> sqlite3.Connection:
@@ -13,33 +14,27 @@ def create_connection(db_file: str) -> sqlite3.Connection:
 
 def create_python_libraries_table(conn: sqlite3.Connection) -> None:
     sql_create_table = """CREATE TABLE IF NOT EXISTS python_libraries (
-                              id INTEGER PRIMARY KEY,
+                              row_id TEXT PRIMARY KEY,
                               library_name TEXT NOT NULL,
                               version TEXT NOT NULL,
                               urls TEXT,
                               snapshot_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                           );"""
-    try:
-        cursor = conn.cursor()
-        cursor.execute(sql_create_table)
-    except sqlite3.Error as e:
-        print(e)
-    try:
-        cursor = conn.cursor()
-        cursor.execute("Delete from python_libraries;")
-    except sqlite3.Error as e:
-        print(e)
+
+    cursor = conn.cursor()
+    cursor.execute(sql_create_table)
+
+    # cursor = conn.cursor()
+    # cursor.execute("Delete from python_libraries;")
 
 
 def insert_python_library(conn: sqlite3.Connection, library_name: str, version: str, urls: dict[str, str]) -> None:
-    sql_insert_library = """INSERT INTO python_libraries (library_name, version, urls) 
-                            VALUES (?, ?, ?)"""
-    try:
-        cursor = conn.cursor()
-        cursor.execute(sql_insert_library, (library_name, version, json.dumps(urls)))
-        conn.commit()
-    except sqlite3.Error as e:
-        print(e)
+    sql_insert_library = """INSERT INTO python_libraries (row_id, library_name, version, urls) 
+                            VALUES (?, ?, ?, ?)"""
+    cursor = conn.cursor()
+    row_id = str(uuid.uuid4())
+    cursor.execute(sql_insert_library, (row_id, library_name, version, json.dumps(urls)))
+    conn.commit()
 
 
 def get_installed_packages() -> Generator[tuple[str, str, PackageMetadata], None, None]:

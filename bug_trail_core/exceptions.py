@@ -38,21 +38,18 @@ def create_connection(db_file: str) -> sqlite3.Connection:
 
 def create_exception_type_table(conn: sqlite3.Connection) -> None:
     """Create the exception_type table with an additional column for the hierarchy"""
-    try:
-        sql_create_exception_type_table = """CREATE TABLE IF NOT EXISTS exception_type (
-                                                id INTEGER PRIMARY KEY,
-                                                name TEXT NOT NULL,
-                                                module TEXT NOT NULL,
-                                                docstring TEXT,
-                                                hierarchy TEXT
-                                            );"""
-        cursor = conn.cursor()
-        cursor.execute(sql_create_exception_type_table)
-    except sqlite3.Error as e:
-        print(e)
+    sql_create_exception_type_table = """CREATE TABLE IF NOT EXISTS exception_type (
+                                            id INTEGER PRIMARY KEY,
+                                            name TEXT NOT NULL,
+                                            module TEXT NOT NULL,
+                                            docstring TEXT,
+                                            hierarchy TEXT
+                                        );"""
+    cursor = conn.cursor()
+    cursor.execute(sql_create_exception_type_table)
 
 
-def insert_exception_type(conn: sqlite3.Connection, ex: BaseException) -> None:
+def insert_exception_type(conn: sqlite3.Connection, ex: BaseException) -> int:
     """Insert a new row into the exception_type table including the hierarchy"""
     ex_class = ex.__class__
     ex_name = ex_class.__name__
@@ -65,32 +62,34 @@ def insert_exception_type(conn: sqlite3.Connection, ex: BaseException) -> None:
     cursor.execute("SELECT id FROM exception_type WHERE name = ? AND module = ?", (ex_name, ex_module))
     data = cursor.fetchone()
 
-    if data is None:
-        # Insert new exception type along with its hierarchy
-        sql_insert_exception_type = """INSERT INTO exception_type (name, module, docstring, hierarchy) 
-                                       VALUES (?, ?, ?, ?)"""
-        cursor.execute(sql_insert_exception_type, (ex_name, ex_module, ex_docstring, ex_hierarchy))
-        conn.commit()
+    # Insert new exception type along with its hierarchy
+    if data is not None:
+        return data[0]
+    sql_insert_exception_type = """INSERT INTO exception_type (name, module, docstring, hierarchy) 
+                                   VALUES (?, ?, ?, ?)"""
+    cursor.execute(sql_insert_exception_type, (ex_name, ex_module, ex_docstring, ex_hierarchy))
+    conn.commit()
+    cursor = conn.cursor()
+    cursor.execute("SELECT id FROM exception_type WHERE name = ? AND module = ?", (ex_name, ex_module))
+    data = cursor.fetchone()
+    return data[0]
 
 
 def create_exception_instance_table(conn: sqlite3.Connection) -> None:
     """Create the exception_instance table if it doesn't exist"""
-    try:
-        sql_create_exception_instance_table = """CREATE TABLE IF NOT EXISTS exception_instance (
-                                                    id INTEGER PRIMARY KEY,
-                                                    type_id INTEGER,
-                                                    args TEXT,
-                                                    str_repr TEXT,
-                                                    comments TEXT,
-                                                    FOREIGN KEY (type_id) REFERENCES exception_type (id)
-                                                );"""
-        cursor = conn.cursor()
-        cursor.execute(sql_create_exception_instance_table)
-    except sqlite3.Error as e:
-        print(e)
+    sql_create_exception_instance_table = """CREATE TABLE IF NOT EXISTS exception_instance (
+                                                record_id TEXT PRIMARY KEY,
+                                                type_id INTEGER,
+                                                args TEXT,
+                                                str_repr TEXT,
+                                                comments TEXT,
+                                                FOREIGN KEY (type_id) REFERENCES exception_type (id)
+                                            );"""
+    cursor = conn.cursor()
+    cursor.execute(sql_create_exception_instance_table)
 
 
-def insert_exception_instance(conn: sqlite3.Connection, ex: BaseException, comments: str = "") -> None:
+def insert_exception_instance(conn: sqlite3.Connection, record_id: str, ex: BaseException, comments: str = "") -> None:
     """Insert a new row into the exception_instance table"""
     ex_class = ex.__class__
     ex_name = ex_class.__name__
@@ -108,30 +107,27 @@ def insert_exception_instance(conn: sqlite3.Connection, ex: BaseException, comme
 
         # Insert new exception instance
         sql_insert_exception_instance = """INSERT INTO exception_instance 
-                                           (type_id, args, str_repr, comments) 
-                                           VALUES (?, ?, ?, ?)"""
-        cursor.execute(sql_insert_exception_instance, (type_id, ex_args, ex_str_repr, comments))
+                                           (record_id, type_id, args, str_repr, comments) 
+                                           VALUES (?, ?, ?, ?, ?)"""
+        cursor.execute(sql_insert_exception_instance, (record_id, type_id, ex_args, ex_str_repr, comments))
         conn.commit()
 
 
 def create_traceback_info_table(conn: sqlite3.Connection) -> None:
     """Create the traceback_info table if it doesn't exist"""
-    try:
-        sql_create_traceback_info_table = """CREATE TABLE IF NOT EXISTS traceback_info (
-                                                id INTEGER PRIMARY KEY,
-                                                exception_instance_id INTEGER,
-                                                frame_number INTEGER,
-                                                f_locals TEXT,
-                                                f_globals TEXT,
-                                                FOREIGN KEY (exception_instance_id) REFERENCES exception_instance (id)
-                                            );"""
-        cursor = conn.cursor()
-        cursor.execute(sql_create_traceback_info_table)
-    except sqlite3.Error as e:
-        print(e)
+    sql_create_traceback_info_table = """CREATE TABLE IF NOT EXISTS traceback_info (
+                                            id TEXT PRIMARY KEY,
+                                            exception_instance_id TEXT,
+                                            frame_number INTEGER,
+                                            f_locals TEXT,
+                                            f_globals TEXT,
+                                            FOREIGN KEY (exception_instance_id) REFERENCES exception_instance (id)
+                                        );"""
+    cursor = conn.cursor()
+    cursor.execute(sql_create_traceback_info_table)
 
 
-def insert_traceback_info(conn: sqlite3.Connection, exception_instance_id: int, tb) -> None:
+def insert_traceback_info(conn: sqlite3.Connection, exception_instance_id: str, tb) -> None:
     """Insert traceback information for each frame"""
     cursor = conn.cursor()
     frame_number = 0
@@ -168,7 +164,7 @@ if __name__ == "__main__":
                 insert_exception_type(conn, ex)
                 # Insert exception instance and get its ID
                 ex.add_note("Hello!")
-                insert_exception_instance(conn, ex, "Comments about the exception")
+                insert_exception_instance(conn, "abc", ex, "Comments about the exception")
                 cursor = conn.cursor()
                 cursor.execute("SELECT last_insert_rowid()")
                 exception_instance_id = cursor.fetchone()[0]
