@@ -23,5 +23,6 @@ CREATE TABLE IF NOT EXISTS logs
     stack_info      TEXT,
     thread          INTEGER,
     threadName      TEXT,
-    traceback       TEXT
+    traceback       TEXT,
+    taskName        TEXT
 )

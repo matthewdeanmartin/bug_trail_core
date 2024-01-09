@@ -5,7 +5,7 @@ import json
 import sqlite3
 
 
-def get_exception_hierarchy(ex: type) -> list[tuple[str, str | None]]:
+def get_exception_hierarchy(ex: BaseException) -> list[tuple[str, str | None]]:
     """
     Get the inheritance hierarchy of an exception.
 
@@ -55,7 +55,7 @@ def insert_exception_type(conn: sqlite3.Connection, ex: BaseException) -> int:
     ex_name = ex_class.__name__
     ex_module = ex_class.__module__
     ex_docstring = ex_class.__doc__
-    ex_hierarchy = json.dumps(get_exception_hierarchy(ex_class))
+    ex_hierarchy = json.dumps(get_exception_hierarchy(ex))
 
     # Check if this type of exception already exists
     cursor = conn.cursor()

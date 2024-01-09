@@ -16,7 +16,7 @@ from bug_trail_core.exceptions import (
     insert_exception_type,
     insert_traceback_info,
 )
-from bug_trail_core.sqlite3_utils import serialize_to_sqlite_supported
+from bug_trail_core.sqlite3_utils import serialize_to_sqlite_supported, is_table_empty
 from bug_trail_core.system_info import create_system_info_table, record_system_info
 from bug_trail_core.venv_info import create_python_libraries_table, record_venv_info
 
@@ -27,6 +27,41 @@ try:
 except NameError:
     pico_available = False
 
+
+def is_table_empty(conn, table_name):
+    """
+    Check if the specified table is empty.
+
+    Parameters:
+    conn (sqlite3.Connection): The database connection.
+    table_name (str): The name of the table to check.
+
+    Returns:
+    bool: True if the table is empty, False otherwise.
+    """
+    try:
+        cursor = conn.cursor()
+        cursor.execute(f"SELECT EXISTS(SELECT 1 FROM {table_name} LIMIT 1);")
+        return cursor.fetchone()[0] == 0
+    except sqlite3.Error as e:
+        print(f"An error occurred: {e}")
+        return True  # Assuming empty if an error occurs
+
+def truncate_table(conn, table_name):
+    """
+    Truncate the specified table.
+
+    Parameters:
+    conn (sqlite3.Connection): The database connection.
+    table_name (str): The name of the table to truncate.
+    """
+    try:
+        cursor = conn.cursor()
+        cursor.execute(f"DELETE FROM {table_name};")
+        cursor.execute("VACUUM;")  # Optional: Cleans the database file, resetting auto-increment counters
+        conn.commit()
+    except sqlite3.Error as e:
+        print(f"An error occurred: {e}")
 
 class BaseErrorLogHandler:
     """
@@ -51,15 +86,24 @@ class BaseErrorLogHandler:
         # call things only after all attributes assigned
         self.reopen()
         self.create_table()
-
+        self.reopen()
         create_exception_type_table(self.conn)
+        self.reopen()
         create_exception_instance_table(self.conn)
+        self.reopen()
         create_traceback_info_table(self.conn)
 
+        self.reopen()
         create_system_info_table(self.conn)
-        record_system_info(self.conn)
+        self.reopen()
+        if is_table_empty(self.conn, "system_info"):
+            record_system_info(self.conn)
+
+        self.reopen()
         create_python_libraries_table(self.conn)
-        record_venv_info(self.conn)
+        self.reopen()
+        if is_table_empty(self.conn, "python_libraries"):
+            record_venv_info(self.conn)
 
     def reopen(self) -> None:
         """Reopen the connection"""
