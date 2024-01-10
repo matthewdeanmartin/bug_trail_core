@@ -28,7 +28,6 @@
 </summary>
 <pre><code class="python">import json
 import platform
-import sqlite3
 from collections.abc import Sequence
 
 import psutil
@@ -107,18 +106,9 @@ if __name__ == &#34;__main__&#34;:
             print(f&#34;{key}: {value}&#34;)
 
 
-def create_connection(db_file):
-    conn = None
-    try:
-        conn = sqlite3.connect(db_file)
-    except sqlite3.Error as e:
-        print(e)
-    return conn
-
-
 def create_system_info_table(conn):
     sql_create_table = &#34;&#34;&#34;CREATE TABLE IF NOT EXISTS system_info (
-                              id INTEGER PRIMARY KEY,
+                              id TEXT PRIMARY KEY,
                               snapshot_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                               total_memory TEXT,
                               available_memory TEXT,
@@ -132,11 +122,8 @@ def create_system_info_table(conn):
                               os_version TEXT,
                               windows_info TEXT
                           );&#34;&#34;&#34;
-    try:
-        cursor = conn.cursor()
-        cursor.execute(sql_create_table)
-    except sqlite3.Error as e:
-        print(e)
+    cursor = conn.cursor()
+    cursor.execute(sql_create_table)
 
 
 def insert_system_info(conn, info):
@@ -145,27 +132,25 @@ def insert_system_info(conn, info):
                           total_disk_space, available_disk_space, os_platform, os_release, 
                           os_architecture, os_version, windows_info) 
                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)&#34;&#34;&#34;
-    try:
-        cursor = conn.cursor()
-        cursor.execute(
-            sql_insert_info,
-            (
-                info[&#34;Total Memory&#34;],
-                info[&#34;Available Memory&#34;],
-                info[&#34;CPU Frequency&#34;],
-                info[&#34;CPU Cores&#34;],
-                info[&#34;Total Disk Space&#34;],
-                info[&#34;Available Disk Space&#34;],
-                info[&#34;Operating System Summary&#34;][&#34;Platform (sysname)&#34;],
-                info[&#34;Operating System Summary&#34;][&#34;Release&#34;],
-                info[&#34;Operating System Summary&#34;][&#34;Architecture&#34;],
-                info[&#34;Operating System Summary&#34;][&#34;Version&#34;],
-                json.dumps(info[&#34;Operating System Summary&#34;][&#34;Windows Info&#34;]),  # Store as JSON string
-            ),
-        )
-        conn.commit()
-    except sqlite3.Error as e:
-        print(e)
+
+    cursor = conn.cursor()
+    cursor.execute(
+        sql_insert_info,
+        (
+            info[&#34;Total Memory&#34;],
+            info[&#34;Available Memory&#34;],
+            info[&#34;CPU Frequency&#34;],
+            info[&#34;CPU Cores&#34;],
+            info[&#34;Total Disk Space&#34;],
+            info[&#34;Available Disk Space&#34;],
+            info[&#34;Operating System Summary&#34;][&#34;Platform (sysname)&#34;],
+            info[&#34;Operating System Summary&#34;][&#34;Release&#34;],
+            info[&#34;Operating System Summary&#34;][&#34;Architecture&#34;],
+            info[&#34;Operating System Summary&#34;][&#34;Version&#34;],
+            json.dumps(info[&#34;Operating System Summary&#34;][&#34;Windows Info&#34;]),  # Store as JSON string
+        ),
+    )
+    conn.commit()
 
 
 def record_system_info(conn):
@@ -211,24 +196,6 @@ def record_system_info(conn):
     return f&#34;{ghz_value:.2f} GHz&#34;</code></pre>
 </details>
 </dd>
-<dt id="bug_trail_core.system_info.create_connection"><code class="name flex">
-<span>def <span class="ident">create_connection</span></span>(<span>db_file)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def create_connection(db_file):
-    conn = None
-    try:
-        conn = sqlite3.connect(db_file)
-    except sqlite3.Error as e:
-        print(e)
-    return conn</code></pre>
-</details>
-</dd>
 <dt id="bug_trail_core.system_info.create_system_info_table"><code class="name flex">
 <span>def <span class="ident">create_system_info_table</span></span>(<span>conn)</span>
 </code></dt>
@@ -240,7 +207,7 @@ def record_system_info(conn):
 </summary>
 <pre><code class="python">def create_system_info_table(conn):
     sql_create_table = &#34;&#34;&#34;CREATE TABLE IF NOT EXISTS system_info (
-                              id INTEGER PRIMARY KEY,
+                              id TEXT PRIMARY KEY,
                               snapshot_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                               total_memory TEXT,
                               available_memory TEXT,
@@ -254,11 +221,8 @@ def record_system_info(conn):
                               os_version TEXT,
                               windows_info TEXT
                           );&#34;&#34;&#34;
-    try:
-        cursor = conn.cursor()
-        cursor.execute(sql_create_table)
-    except sqlite3.Error as e:
-        print(e)</code></pre>
+    cursor = conn.cursor()
+    cursor.execute(sql_create_table)</code></pre>
 </details>
 </dd>
 <dt id="bug_trail_core.system_info.get_os_summary"><code class="name flex">
@@ -345,27 +309,25 @@ def record_system_info(conn):
                           total_disk_space, available_disk_space, os_platform, os_release, 
                           os_architecture, os_version, windows_info) 
                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)&#34;&#34;&#34;
-    try:
-        cursor = conn.cursor()
-        cursor.execute(
-            sql_insert_info,
-            (
-                info[&#34;Total Memory&#34;],
-                info[&#34;Available Memory&#34;],
-                info[&#34;CPU Frequency&#34;],
-                info[&#34;CPU Cores&#34;],
-                info[&#34;Total Disk Space&#34;],
-                info[&#34;Available Disk Space&#34;],
-                info[&#34;Operating System Summary&#34;][&#34;Platform (sysname)&#34;],
-                info[&#34;Operating System Summary&#34;][&#34;Release&#34;],
-                info[&#34;Operating System Summary&#34;][&#34;Architecture&#34;],
-                info[&#34;Operating System Summary&#34;][&#34;Version&#34;],
-                json.dumps(info[&#34;Operating System Summary&#34;][&#34;Windows Info&#34;]),  # Store as JSON string
-            ),
-        )
-        conn.commit()
-    except sqlite3.Error as e:
-        print(e)</code></pre>
+
+    cursor = conn.cursor()
+    cursor.execute(
+        sql_insert_info,
+        (
+            info[&#34;Total Memory&#34;],
+            info[&#34;Available Memory&#34;],
+            info[&#34;CPU Frequency&#34;],
+            info[&#34;CPU Cores&#34;],
+            info[&#34;Total Disk Space&#34;],
+            info[&#34;Available Disk Space&#34;],
+            info[&#34;Operating System Summary&#34;][&#34;Platform (sysname)&#34;],
+            info[&#34;Operating System Summary&#34;][&#34;Release&#34;],
+            info[&#34;Operating System Summary&#34;][&#34;Architecture&#34;],
+            info[&#34;Operating System Summary&#34;][&#34;Version&#34;],
+            json.dumps(info[&#34;Operating System Summary&#34;][&#34;Windows Info&#34;]),  # Store as JSON string
+        ),
+    )
+    conn.commit()</code></pre>
 </details>
 </dd>
 <dt id="bug_trail_core.system_info.record_system_info"><code class="name flex">
@@ -405,7 +367,6 @@ def record_system_info(conn):
 <ul class="">
 <li><code><a title="bug_trail_core.system_info.convert_bytes_to_gb" href="#bug_trail_core.system_info.convert_bytes_to_gb">convert_bytes_to_gb</a></code></li>
 <li><code><a title="bug_trail_core.system_info.convert_mhz_to_ghz" href="#bug_trail_core.system_info.convert_mhz_to_ghz">convert_mhz_to_ghz</a></code></li>
-<li><code><a title="bug_trail_core.system_info.create_connection" href="#bug_trail_core.system_info.create_connection">create_connection</a></code></li>
 <li><code><a title="bug_trail_core.system_info.create_system_info_table" href="#bug_trail_core.system_info.create_system_info_table">create_system_info_table</a></code></li>
 <li><code><a title="bug_trail_core.system_info.get_os_summary" href="#bug_trail_core.system_info.get_os_summary">get_os_summary</a></code></li>
 <li><code><a title="bug_trail_core.system_info.get_system_info" href="#bug_trail_core.system_info.get_system_info">get_system_info</a></code></li>

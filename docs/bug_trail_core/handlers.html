@@ -33,6 +33,7 @@ This module contains custom logging handlers.
 import logging
 import sqlite3
 import traceback
+import uuid
 from importlib.resources import as_file, files
 from typing import Any, Optional
 
@@ -44,7 +45,7 @@ from bug_trail_core.exceptions import (
     insert_exception_type,
     insert_traceback_info,
 )
-from bug_trail_core.sqlite3_utils import serialize_to_sqlite_supported
+from bug_trail_core.sqlite3_utils import is_table_empty, serialize_to_sqlite_supported
 from bug_trail_core.system_info import create_system_info_table, record_system_info
 from bug_trail_core.venv_info import create_python_libraries_table, record_venv_info
 
@@ -79,15 +80,24 @@ class BaseErrorLogHandler:
         # call things only after all attributes assigned
         self.reopen()
         self.create_table()
-
+        self.reopen()
         create_exception_type_table(self.conn)
+        self.reopen()
         create_exception_instance_table(self.conn)
+        self.reopen()
         create_traceback_info_table(self.conn)
 
+        self.reopen()
         create_system_info_table(self.conn)
-        record_system_info(self.conn)
+        self.reopen()
+        if is_table_empty(self.conn, &#34;system_info&#34;):
+            record_system_info(self.conn)
+
+        self.reopen()
         create_python_libraries_table(self.conn)
-        record_venv_info(self.conn)
+        self.reopen()
+        if is_table_empty(self.conn, &#34;python_libraries&#34;):
+            record_venv_info(self.conn)
 
     def reopen(self) -&gt; None:
         &#34;&#34;&#34;Reopen the connection&#34;&#34;&#34;
@@ -163,6 +173,9 @@ class BaseErrorLogHandler:
         &#34;&#34;&#34;
         if record.levelno &lt; self.minimum_level:
             return
+
+        # clientside primary key
+        record_id = str(uuid.uuid4())
         # Check if there is exception information
         if record.exc_info:
             exception_type, exception, traceback_object = record.exc_info
@@ -171,11 +184,11 @@ class BaseErrorLogHandler:
             record.traceback = traceback_str
 
             if exception:
+                # not unique per log entry
                 insert_exception_type(self.conn, exception)
-                insert_exception_instance(self.conn, exception)
-                cursor = self.conn.cursor()
-                cursor.execute(&#34;SELECT last_insert_rowid()&#34;)
-                exception_instance_id = cursor.fetchone()[0]
+                # unique per log entry
+                insert_exception_instance(self.conn, record_id, exception)
+                exception_instance_id = record_id
                 # Insert traceback info
                 if exception and exception.__traceback__:
                     insert_traceback_info(self.conn, exception_instance_id, exception.__traceback__)
@@ -191,8 +204,8 @@ class BaseErrorLogHandler:
             )
             self.field_names = self.field_names + &#34;, traceback, message&#34;
             field_values = &#34;, &#34;.join([&#34;?&#34; for _ in self.field_names.split(&#34;, &#34;)])
-            self.formatted_sql = insert_sql.format(fields=self.field_names, values=field_values)
-        args = [getattr(record, field, &#34;&#34;) for field in self.field_names.split(&#34;, &#34;)]
+            self.formatted_sql = insert_sql.format(fields=&#34;record_id,&#34; + self.field_names, values=&#34;?,&#34; + field_values)
+        args = [record_id] + [getattr(record, field, &#34;&#34;) for field in self.field_names.split(&#34;, &#34;)]
         args = [serialize_to_sqlite_supported(arg) for arg in args]
 
         self.safe_execute(self.formatted_sql, args)
@@ -369,15 +382,24 @@ class PicoBugTrailHandler(picologging.Handler):
         # call things only after all attributes assigned
         self.reopen()
         self.create_table()
-
+        self.reopen()
         create_exception_type_table(self.conn)
+        self.reopen()
         create_exception_instance_table(self.conn)
+        self.reopen()
         create_traceback_info_table(self.conn)
 
+        self.reopen()
         create_system_info_table(self.conn)
-        record_system_info(self.conn)
+        self.reopen()
+        if is_table_empty(self.conn, &#34;system_info&#34;):
+            record_system_info(self.conn)
+
+        self.reopen()
         create_python_libraries_table(self.conn)
-        record_venv_info(self.conn)
+        self.reopen()
+        if is_table_empty(self.conn, &#34;python_libraries&#34;):
+            record_venv_info(self.conn)
 
     def reopen(self) -&gt; None:
         &#34;&#34;&#34;Reopen the connection&#34;&#34;&#34;
@@ -453,6 +475,9 @@ class PicoBugTrailHandler(picologging.Handler):
         &#34;&#34;&#34;
         if record.levelno &lt; self.minimum_level:
             return
+
+        # clientside primary key
+        record_id = str(uuid.uuid4())
         # Check if there is exception information
         if record.exc_info:
             exception_type, exception, traceback_object = record.exc_info
@@ -461,11 +486,11 @@ class PicoBugTrailHandler(picologging.Handler):
             record.traceback = traceback_str
 
             if exception:
+                # not unique per log entry
                 insert_exception_type(self.conn, exception)
-                insert_exception_instance(self.conn, exception)
-                cursor = self.conn.cursor()
-                cursor.execute(&#34;SELECT last_insert_rowid()&#34;)
-                exception_instance_id = cursor.fetchone()[0]
+                # unique per log entry
+                insert_exception_instance(self.conn, record_id, exception)
+                exception_instance_id = record_id
                 # Insert traceback info
                 if exception and exception.__traceback__:
                     insert_traceback_info(self.conn, exception_instance_id, exception.__traceback__)
@@ -481,8 +506,8 @@ class PicoBugTrailHandler(picologging.Handler):
             )
             self.field_names = self.field_names + &#34;, traceback, message&#34;
             field_values = &#34;, &#34;.join([&#34;?&#34; for _ in self.field_names.split(&#34;, &#34;)])
-            self.formatted_sql = insert_sql.format(fields=self.field_names, values=field_values)
-        args = [getattr(record, field, &#34;&#34;) for field in self.field_names.split(&#34;, &#34;)]
+            self.formatted_sql = insert_sql.format(fields=&#34;record_id,&#34; + self.field_names, values=&#34;?,&#34; + field_values)
+        args = [record_id] + [getattr(record, field, &#34;&#34;) for field in self.field_names.split(&#34;, &#34;)]
         args = [serialize_to_sqlite_supported(arg) for arg in args]
 
         self.safe_execute(self.formatted_sql, args)
@@ -665,6 +690,9 @@ class PicoBugTrailHandler(picologging.Handler):
     &#34;&#34;&#34;
     if record.levelno &lt; self.minimum_level:
         return
+
+    # clientside primary key
+    record_id = str(uuid.uuid4())
     # Check if there is exception information
     if record.exc_info:
         exception_type, exception, traceback_object = record.exc_info
@@ -673,11 +701,11 @@ class PicoBugTrailHandler(picologging.Handler):
         record.traceback = traceback_str
 
         if exception:
+            # not unique per log entry
             insert_exception_type(self.conn, exception)
-            insert_exception_instance(self.conn, exception)
-            cursor = self.conn.cursor()
-            cursor.execute(&#34;SELECT last_insert_rowid()&#34;)
-            exception_instance_id = cursor.fetchone()[0]
+            # unique per log entry
+            insert_exception_instance(self.conn, record_id, exception)
+            exception_instance_id = record_id
             # Insert traceback info
             if exception and exception.__traceback__:
                 insert_traceback_info(self.conn, exception_instance_id, exception.__traceback__)
@@ -693,8 +721,8 @@ class PicoBugTrailHandler(picologging.Handler):
         )
         self.field_names = self.field_names + &#34;, traceback, message&#34;
         field_values = &#34;, &#34;.join([&#34;?&#34; for _ in self.field_names.split(&#34;, &#34;)])
-        self.formatted_sql = insert_sql.format(fields=self.field_names, values=field_values)
-    args = [getattr(record, field, &#34;&#34;) for field in self.field_names.split(&#34;, &#34;)]
+        self.formatted_sql = insert_sql.format(fields=&#34;record_id,&#34; + self.field_names, values=&#34;?,&#34; + field_values)
+    args = [record_id] + [getattr(record, field, &#34;&#34;) for field in self.field_names.split(&#34;, &#34;)]
     args = [serialize_to_sqlite_supported(arg) for arg in args]
 
     self.safe_execute(self.formatted_sql, args)</code></pre>

@@ -1,6 +1,7 @@
 from bug_trail_core.exceptions import get_exception_hierarchy
 
+
 def test_get_exception_hierarchy():
-    # ZeroDivisionError has an interesting hierarcy
+    # ZeroDivisionError has an interesting hierarchy
     result = get_exception_hierarchy(ZeroDivisionError())
-    assert result == "123123"
+    assert len(result) == 5

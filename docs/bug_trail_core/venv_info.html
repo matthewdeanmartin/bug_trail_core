@@ -29,9 +29,10 @@
 <pre><code class="python">import importlib.metadata
 import json
 import sqlite3
+import uuid
+from collections.abc import Generator
 from importlib.metadata import PackageMetadata
 from typing import cast
-from collections.abc import Generator
 
 
 def create_connection(db_file: str) -&gt; sqlite3.Connection:
@@ -41,33 +42,27 @@ def create_connection(db_file: str) -&gt; sqlite3.Connection:
 
 def create_python_libraries_table(conn: sqlite3.Connection) -&gt; None:
     sql_create_table = &#34;&#34;&#34;CREATE TABLE IF NOT EXISTS python_libraries (
-                              id INTEGER PRIMARY KEY,
+                              row_id TEXT PRIMARY KEY,
                               library_name TEXT NOT NULL,
                               version TEXT NOT NULL,
                               urls TEXT,
                               snapshot_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                           );&#34;&#34;&#34;
-    try:
-        cursor = conn.cursor()
-        cursor.execute(sql_create_table)
-    except sqlite3.Error as e:
-        print(e)
-    try:
-        cursor = conn.cursor()
-        cursor.execute(&#34;Delete from python_libraries;&#34;)
-    except sqlite3.Error as e:
-        print(e)
+
+    cursor = conn.cursor()
+    cursor.execute(sql_create_table)
+
+    # cursor = conn.cursor()
+    # cursor.execute(&#34;Delete from python_libraries;&#34;)
 
 
 def insert_python_library(conn: sqlite3.Connection, library_name: str, version: str, urls: dict[str, str]) -&gt; None:
-    sql_insert_library = &#34;&#34;&#34;INSERT INTO python_libraries (library_name, version, urls) 
-                            VALUES (?, ?, ?)&#34;&#34;&#34;
-    try:
-        cursor = conn.cursor()
-        cursor.execute(sql_insert_library, (library_name, version, json.dumps(urls)))
-        conn.commit()
-    except sqlite3.Error as e:
-        print(e)
+    sql_insert_library = &#34;&#34;&#34;INSERT INTO python_libraries (row_id, library_name, version, urls) 
+                            VALUES (?, ?, ?, ?)&#34;&#34;&#34;
+    cursor = conn.cursor()
+    row_id = str(uuid.uuid4())
+    cursor.execute(sql_insert_library, (row_id, library_name, version, json.dumps(urls)))
+    conn.commit()
 
 
 def get_installed_packages() -&gt; Generator[tuple[str, str, PackageMetadata], None, None]:
@@ -132,22 +127,18 @@ def record_venv_info(conn: sqlite3.Connection) -&gt; None:
 </summary>
 <pre><code class="python">def create_python_libraries_table(conn: sqlite3.Connection) -&gt; None:
     sql_create_table = &#34;&#34;&#34;CREATE TABLE IF NOT EXISTS python_libraries (
-                              id INTEGER PRIMARY KEY,
+                              row_id TEXT PRIMARY KEY,
                               library_name TEXT NOT NULL,
                               version TEXT NOT NULL,
                               urls TEXT,
                               snapshot_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                           );&#34;&#34;&#34;
-    try:
-        cursor = conn.cursor()
-        cursor.execute(sql_create_table)
-    except sqlite3.Error as e:
-        print(e)
-    try:
-        cursor = conn.cursor()
-        cursor.execute(&#34;Delete from python_libraries;&#34;)
-    except sqlite3.Error as e:
-        print(e)</code></pre>
+
+    cursor = conn.cursor()
+    cursor.execute(sql_create_table)
+
+    # cursor = conn.cursor()
+    # cursor.execute(&#34;Delete from python_libraries;&#34;)</code></pre>
 </details>
 </dd>
 <dt id="bug_trail_core.venv_info.get_installed_packages"><code class="name flex">
@@ -174,14 +165,12 @@ def record_venv_info(conn: sqlite3.Connection) -&gt; None:
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">def insert_python_library(conn: sqlite3.Connection, library_name: str, version: str, urls: dict[str, str]) -&gt; None:
-    sql_insert_library = &#34;&#34;&#34;INSERT INTO python_libraries (library_name, version, urls) 
-                            VALUES (?, ?, ?)&#34;&#34;&#34;
-    try:
-        cursor = conn.cursor()
-        cursor.execute(sql_insert_library, (library_name, version, json.dumps(urls)))
-        conn.commit()
-    except sqlite3.Error as e:
-        print(e)</code></pre>
+    sql_insert_library = &#34;&#34;&#34;INSERT INTO python_libraries (row_id, library_name, version, urls) 
+                            VALUES (?, ?, ?, ?)&#34;&#34;&#34;
+    cursor = conn.cursor()
+    row_id = str(uuid.uuid4())
+    cursor.execute(sql_insert_library, (row_id, library_name, version, json.dumps(urls)))
+    conn.commit()</code></pre>
 </details>
 </dd>
 <dt id="bug_trail_core.venv_info.record_venv_info"><code class="name flex">

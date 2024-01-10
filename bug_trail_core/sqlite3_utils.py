@@ -1,16 +1,18 @@
 """
 Another module to avoid Circular Import
 """
-import sqlite3
-
 import datetime
+import sqlite3
 from typing import Any, Optional, Union
 
-# try:
-#     from types import NoneType
-# except ImportError:
-#     # Python 3.9 support.
-#     NoneType = type(None)
+ALL_TABLES = [
+    "exception_instance",
+    "exception_type",
+    "logs",
+    "python_libraries",
+    "system_info",
+    "traceback_info",
+]
 
 
 SqliteTypes = Union[None, int, float, str, bytes, datetime.date, datetime.datetime]
@@ -35,7 +37,8 @@ def serialize_to_sqlite_supported(value: Optional[Any]) -> SqliteTypes:
         return value
     return str(value)
 
-def is_table_empty(conn, table_name):
+
+def is_table_empty(conn: sqlite3.Connection, table_name: str) -> bool:
     """
     Check if the specified table is empty.
 
@@ -46,15 +49,17 @@ def is_table_empty(conn, table_name):
     Returns:
     bool: True if the table is empty, False otherwise.
     """
+    if table_name not in ALL_TABLES:
+        raise TypeError("Bad table name.")
     try:
         cursor = conn.cursor()
-        cursor.execute(f"SELECT EXISTS(SELECT 1 FROM {table_name} LIMIT 1);")
+        cursor.execute(f"SELECT EXISTS(SELECT 1 FROM {table_name} LIMIT 1);")  # nosec: table checked above
         return cursor.fetchone()[0] == 0
-    except sqlite3.Error as e:
-        print(f"An error occurred: {e}")
+    except sqlite3.Error:
         return True  # Assuming empty if an error occurs
 
-def truncate_table(conn, table_name):
+
+def truncate_table(conn: sqlite3.Connection, table_name: str) -> None:
     """
     Truncate the specified table.
 
@@ -62,9 +67,11 @@ def truncate_table(conn, table_name):
     conn (sqlite3.Connection): The database connection.
     table_name (str): The name of the table to truncate.
     """
+    if table_name not in ALL_TABLES:
+        raise TypeError("Bad table name.")
     try:
         cursor = conn.cursor()
-        cursor.execute(f"DELETE FROM {table_name};")
+        cursor.execute(f"DELETE FROM {table_name};")  # nosec: table checked above
         cursor.execute("VACUUM;")  # Optional: Cleans the database file, resetting auto-increment counters
         conn.commit()
     except sqlite3.Error as e:
