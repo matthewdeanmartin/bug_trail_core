@@ -1,6 +1,8 @@
 """
 This module contains custom logging handlers.
 """
+import sys
+
 import logging
 import sqlite3
 import traceback
@@ -147,6 +149,8 @@ class BaseErrorLogHandler:
 
         # clientside primary key
         record_id = str(uuid.uuid4())
+        if not record.exc_info:
+            record.exc_info = sys.exc_info()
         # Check if there is exception information
         if record.exc_info:
             exception_type, exception, traceback_object = record.exc_info
@@ -208,10 +212,28 @@ class BaseErrorLogHandler:
             return
         # Check if there is exception information
         traceback_str: Optional[str] = None
+        # clientside primary key
+        record_id = str(uuid.uuid4())
+        if not record.exc_info:
+            record.exc_info = sys.exc_info()
+        # Check if there is exception information
         if record.exc_info:
+            exception_type, exception, traceback_object = record.exc_info
             # Format the traceback
             traceback_str = "".join(traceback.format_exception(*record.exc_info))
-            # pico doesn't have this field.
+            record.traceback = traceback_str
+
+            if exception:
+                # not unique per log entry
+                insert_exception_type(self.conn, exception)
+                # unique per log entry
+                insert_exception_instance(self.conn, record_id, exception)
+                exception_instance_id = record_id
+                # Insert traceback info
+                if exception and exception.__traceback__:
+                    insert_traceback_info(self.conn, exception_instance_id, exception.__traceback__)
+        else:
+            record.traceback = None
 
         if not self.formatted_sql:
             insert_sql = "INSERT INTO logs ({fields}) VALUES ({values})"
