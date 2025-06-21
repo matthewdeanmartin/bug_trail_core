@@ -3,7 +3,7 @@ Reports all that ad hoc, folksonomy metadata that is used in Python packages and
 
 There is no standard but could be useful for diagnostics.
 """
-
+from __future__ import annotations
 import inspect
 import os
 import re

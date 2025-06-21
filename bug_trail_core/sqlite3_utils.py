@@ -1,7 +1,7 @@
 """
 Another module to avoid Circular Import
 """
-
+from __future__ import annotations
 import datetime
 import sqlite3
 from typing import Any, Union

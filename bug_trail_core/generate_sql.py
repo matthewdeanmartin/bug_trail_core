@@ -1,7 +1,7 @@
 """
 Code to generate sql for table.
 """
-
+from __future__ import annotations
 import logging
 
 

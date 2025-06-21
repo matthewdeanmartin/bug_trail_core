@@ -13,3 +13,7 @@
   - add_note info (found in __notes__ )
 - Get all tb info (locals)
 - Exception Groups
+
+## Tox fails
+- fails for 3.9, 3.10, 3.13
+- 

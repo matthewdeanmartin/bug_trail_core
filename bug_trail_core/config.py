@@ -1,7 +1,7 @@
 """
 Configuration module for Bug Trail.
 """
-
+from __future__ import annotations
 import os
 from dataclasses import dataclass
 
@@ -57,8 +57,10 @@ def read_config(config_path: str) -> BugTrailConfig:
     app_name = section.get("app_name", "bug_trail")
     app_author = section.get("app_author", "bug_trail")
 
+
     default_data_dir = platformdirs.user_data_dir(app_name, app_author, ensure_exists=True)
     default_config_dir = platformdirs.user_config_dir(app_name, app_author, ensure_exists=True)
+
 
     report_folder = section.get("report_folder", os.path.join(default_data_dir, "reports"))
     database_path = section.get("database_path", os.path.join(default_config_dir, "bug_trail.db"))

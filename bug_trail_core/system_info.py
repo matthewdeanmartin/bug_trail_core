@@ -1,3 +1,7 @@
+"""
+System info for including with error logs
+"""
+from __future__ import annotations
 import json
 import platform
 from collections.abc import Sequence
