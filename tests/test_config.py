@@ -1,14 +1,14 @@
 import sys
+from unittest.mock import patch
 
 import pytest
-from unittest.mock import patch
 
 from bug_trail_core import read_config  # Replace with your actual import
 
 
 # Test when the config file is present and contains all necessary fields
 @pytest.mark.skipif(sys.version_info[:2] == (3, 9), reason="Skipped on Python 3.9")
-@pytest.mark.skipif(sys.version_info[:2] == (3,10), reason="Skipped on Python 3.10")
+@pytest.mark.skipif(sys.version_info[:2] == (3, 10), reason="Skipped on Python 3.10")
 def test_read_config_full(tmp_path):
     # Create a temporary TOML file with full configuration
     config_file = tmp_path / "pyproject.toml"
@@ -45,7 +45,7 @@ def test_read_config_full(tmp_path):
 
 # Test when the config file is missing some fields
 @pytest.mark.skipif(sys.version_info[:2] == (3, 9), reason="Skipped on Python 3.9")
-@pytest.mark.skipif(sys.version_info[:2] == (3,10), reason="Skipped on Python 3.10")
+@pytest.mark.skipif(sys.version_info[:2] == (3, 10), reason="Skipped on Python 3.10")
 def test_read_config_partial(tmp_path):
     # Create a temporary TOML file with partial configuration
     config_file = tmp_path / "pyproject.toml"
