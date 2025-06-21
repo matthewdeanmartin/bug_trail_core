@@ -6,16 +6,23 @@ import psutil
 
 
 def convert_bytes_to_gb(bytes_value: int) -> str:
+    """
+    Converts a byte value to gigabytes and formats it to two decimal places.
+    """
     gb_value = bytes_value / (1024**3)
     return f"{gb_value:.2f} GB"
 
 
 def convert_mhz_to_ghz(mhz_value: int) -> str:
+    """
+    Converts a frequency value from MHz to GHz and formats it to two decimal places.
+    """
     ghz_value = mhz_value / 1000
     return f"{ghz_value:.2f} GHz"
 
 
 def get_os_summary() -> dict[str, Sequence[str]]:
+    """Collects and returns a summary of the operating system information."""
     os_version = platform.version()
     os_platform = platform.system()
     os_release = platform.release()
@@ -34,6 +41,9 @@ def get_os_summary() -> dict[str, Sequence[str]]:
 
 
 def get_system_info() -> dict[str, str | Sequence[str]]:
+    """
+    Collects and returns system information including memory, CPU, disk space, and operating system details.
+    """
     # Memory information
     mem = psutil.virtual_memory()
     total_memory = convert_bytes_to_gb(mem.total)
@@ -79,6 +89,7 @@ if __name__ == "__main__":
 
 
 def create_system_info_table(conn):
+    """Creates the system_info table in the database if it does not exist."""
     sql_create_table = """CREATE TABLE IF NOT EXISTS system_info (
                               id TEXT PRIMARY KEY,
                               snapshot_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -99,6 +110,7 @@ def create_system_info_table(conn):
 
 
 def insert_system_info(conn, info):
+    """Inserts system information into the system_info table."""
     sql_insert_info = """INSERT INTO system_info 
                          (total_memory, available_memory, cpu_frequency, cpu_cores, 
                           total_disk_space, available_disk_space, os_platform, os_release, 
@@ -126,6 +138,7 @@ def insert_system_info(conn, info):
 
 
 def record_system_info(conn):
+    """Records system information into the database."""
     if conn is None:
         raise TypeError("Need live connection")
     create_system_info_table(conn)

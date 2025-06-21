@@ -20,6 +20,7 @@ import platformdirs
 
 @dataclass
 class BugTrailConfig:
+    """Dataclass to hold Bug Trail configuration."""
     app_name: str
     app_author: str
     report_folder: str

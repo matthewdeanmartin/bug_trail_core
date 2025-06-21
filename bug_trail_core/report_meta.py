@@ -1,5 +1,5 @@
 """
-Reports all that ad hoc, folksonmy metadata that is used in Python packages and scripts.
+Reports all that ad hoc, folksonomy metadata that is used in Python packages and scripts.
 
 There is no standard but could be useful for diagnostics.
 """
@@ -66,9 +66,11 @@ def get_meta(init_file):
 if __name__ == "__main__":
 
     class CustomError(Exception):
-        pass
+        """Custom exception for demonstration purposes."""
+
 
     def run():
+        """Main function to demonstrate metadata extraction."""
         try:
             # ... some code that raises CustomError ...
             raise CustomError("An error occurred")
@@ -76,7 +78,7 @@ if __name__ == "__main__":
             module = get_module(ce)
             # is_pkg = is_package(module) # returns false even though it is in a package!
             # if not is_pkg:
-            # Get's file where declared.
+            # Gets file where declared.
             file = get_module_file(module)
             for candidate in ["__init__.py", "__about__.py", "about.py", "__meta__.py", file]:
                 init_file = get_init(module, candidate)

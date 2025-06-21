@@ -1,5 +1,5 @@
 """
-Captures error logs to sqlite. Compansion CLI tool generates a static website.
+Captures error logs to sqlite. Companion CLI tool generates a static website.
 
 Install bug_trail_core to your application. Pipx install bug_trail to avoid dependency
 conflicts

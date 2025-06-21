@@ -1,9 +1,11 @@
 # TODO
 
 ## SQL
+
 - static table creation. DONE
 
 ## exc_info triplet
+
 - Get all type info (won't be available in report gen state)
   - doc strings
   - class hierarchy?
