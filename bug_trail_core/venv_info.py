@@ -1,15 +1,10 @@
-"""
-Venv info for including with error logs.
-"""
-
 import json
 import sqlite3
 import uuid
-from collections.abc import Generator
+from collections.abc import Generator, Mapping
 from contextlib import contextmanager
-from importlib import metadata
-from importlib.metadata import PackageMetadata
-from typing import cast
+import importlib.metadata
+from typing import Any, Dict, cast
 
 
 @contextmanager
@@ -39,21 +34,24 @@ def create_python_libraries_table(conn: sqlite3.Connection) -> None:
     cursor = conn.cursor()
     cursor.execute(sql_create_table)
 
-    # cursor = conn.cursor()
-    # cursor.execute("Delete from python_libraries;")
 
-
-def insert_python_library(conn: sqlite3.Connection, library_name: str, version: str, urls: dict[str, str]) -> None:
-    sql_insert_library = """INSERT INTO python_libraries (row_id, library_name, version, urls) 
+def insert_python_library(conn: sqlite3.Connection, library_name: str, version: str, urls: Dict[str, str]) -> None:
+    sql_insert_library = """INSERT INTO python_libraries (row_id, library_name, version, urls)
                             VALUES (?, ?, ?, ?)"""
-    cursor = conn.cursor()
+    cursor = conn.cursor() # Corrected: This should be conn.cursor(), not conn.select()
     row_id = str(uuid.uuid4())
     cursor.execute(sql_insert_library, (row_id, library_name, version, json.dumps(urls)))
     conn.commit()
 
 
-def get_installed_packages() -> Generator[tuple[str, str, PackageMetadata], None, None]:
-    for package in metadata.distributions():
+# Modified type hint for the metadata object
+def get_installed_packages() -> Generator[tuple[str, str, Mapping[str, Any]], None, None]:
+    for package in importlib.metadata.distributions():
+        # package.metadata in 3.9 is an email.message.Message object,
+        # which behaves like a dictionary. We'll use Mapping[str, Any]
+        # to represent its dictionary-like behavior without
+        # relying on the internal email.message.Message type or the
+        # not-yet-exposed PackageMetadata.
         yield package.metadata["Name"], package.version, package.metadata
 
 
@@ -62,23 +60,25 @@ def record_venv_info(conn: sqlite3.Connection) -> None:
         raise TypeError("Need live connection")
     create_python_libraries_table(conn)
     for name, version, the_metadata in get_installed_packages():
-        urls = {
-            key: value for key, value in cast(dict, the_metadata).items() if value.strip().lower().startswith("http")
-        }
-        if the_metadata.json:
-            kvs = the_metadata.json
-            project_url = kvs.get("project_url")
-            if isinstance(project_url, list):
-                more_urls = {}
-                for url in project_url:
-                    key, value = url.split(",")
-                    more_urls[key] = value
-                urls.update(more_urls)
+        urls: Dict[str, str] = {} # Initialize urls as a Dict
 
-            more_urls = {
-                key: value
-                for key, value in kvs.items()
-                if isinstance(value, str) and value.strip().lower().startswith("http")
-            }
-            urls.update(more_urls)
+        # Iterate over metadata items to find URLs.
+        # the_metadata is a Mapping[str, Any]
+        for key, value in the_metadata.items():
+            if isinstance(value, str) and value.strip().lower().startswith("http"):
+                urls[key] = value
+
+        # Special handling for 'Project-URL' which can contain multiple URLs
+        # In 3.9, the_metadata.get_all works for multi-value headers.
+        project_urls = the_metadata.get_all("Project-URL")
+        if project_urls:
+            for url_entry in project_urls:
+                try:
+                    # Use split with maxsplit to handle commas in the URL value itself
+                    key, value = url_entry.split(",", 1)
+                    urls[key.strip()] = value.strip()
+                except ValueError:
+                    # Handle cases where the Project-URL might not be in the expected format
+                    pass
+
         insert_python_library(conn, name, version, urls)
