@@ -92,7 +92,7 @@ Get ctags from [here](https://github.com/universal-ctags/ctags)
 
 Inspired by elmah. `bug_trail` is much less ambitious, as this is just a browsable, static HTML report.
 
-If you want logger for a website, hosted in your Flak or Django website:
+If you want logger for a website, hosted in your Flask or Django website:
 
 - [Flask-ErrorsHandler](https://pypi.org/project/Flask-ErrorsHandler/)
 - [django-elmah](https://pypi.org/project/django-elmah/)
