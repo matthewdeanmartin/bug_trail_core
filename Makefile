@@ -50,6 +50,7 @@ isort: .build_history/isort
 
 .build_history/black: .build_history .build_history/isort $(FILES)
 	@echo "Formatting code"
+	$(VENV) metametameta pep621
 	$(VENV) black bug_trail_core --exclude .venv
 	$(VENV) black tests --exclude .venv
 	# $(VENV) black scripts --exclude .venv
