@@ -54,7 +54,8 @@ isort: .build_history/isort
 	$(VENV) black tests --exclude .venv
 	# $(VENV) black scripts --exclude .venv
 	@touch .build_history/black
-	$(VENV) coderoller-flatten-repo bug_trail_core
+	[ -n "$$CI" ] && echo "Skipping coderoller-flatten-repo in CI" || $(VENV) coderoller-flatten-repo bug_trail_core
+
 
 .PHONY: black
 black: .build_history/black
