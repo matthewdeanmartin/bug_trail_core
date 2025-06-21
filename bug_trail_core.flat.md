@@ -7,6 +7,8 @@
 Configuration module for Bug Trail.
 """
 
+from __future__ import annotations
+
 import os
 from dataclasses import dataclass
 
@@ -25,6 +27,8 @@ import platformdirs
 
 @dataclass
 class BugTrailConfig:
+    """Dataclass to hold Bug Trail configuration."""
+
     app_name: str
     app_author: str
     report_folder: str
@@ -61,16 +65,26 @@ def read_config(config_path: str) -> BugTrailConfig:
     app_name = section.get("app_name", "bug_trail")
     app_author = section.get("app_author", "bug_trail")
 
-    default_data_dir = platformdirs.user_data_dir(app_name, app_author, ensure_exists=True)
-    default_config_dir = platformdirs.user_config_dir(app_name, app_author, ensure_exists=True)
+    default_data_dir = platformdirs.user_data_dir(
+        app_name, app_author, ensure_exists=True
+    )
+    default_config_dir = platformdirs.user_config_dir(
+        app_name, app_author, ensure_exists=True
+    )
 
-    report_folder = section.get("report_folder", os.path.join(default_data_dir, "reports"))
-    database_path = section.get("database_path", os.path.join(default_config_dir, "bug_trail.db"))
+    report_folder = section.get(
+        "report_folder", os.path.join(default_data_dir, "reports")
+    )
+    database_path = section.get(
+        "database_path", os.path.join(default_config_dir, "bug_trail.db")
+    )
 
     # input!
     source_folder = section.get("source_folder", "")
     ctags_file = section.get("ctags_file", "")
-    return BugTrailConfig(app_name, app_author, report_folder, database_path, source_folder, ctags_file)
+    return BugTrailConfig(
+        app_name, app_author, report_folder, database_path, source_folder, ctags_file
+    )
 
 
 if __name__ == "__main__":
@@ -81,7 +95,6 @@ if __name__ == "__main__":
         print(config)
 
     run()
-
 ```
 
 ## File: exceptions.py
@@ -90,6 +103,8 @@ if __name__ == "__main__":
 """
 Record type, instance and call stack info about an exception.
 """
+
+from __future__ import annotations
 
 import json
 import sqlite3
@@ -149,7 +164,10 @@ def insert_exception_type(conn: sqlite3.Connection, ex: BaseException) -> int:
 
     # Check if this type of exception already exists
     cursor = conn.cursor()
-    cursor.execute("SELECT id FROM exception_type WHERE name = ? AND module = ?", (ex_name, ex_module))
+    cursor.execute(
+        "SELECT id FROM exception_type WHERE name = ? AND module = ?",
+        (ex_name, ex_module),
+    )
     data = cursor.fetchone()
 
     # Insert new exception type along with its hierarchy
@@ -157,10 +175,15 @@ def insert_exception_type(conn: sqlite3.Connection, ex: BaseException) -> int:
         return data[0]
     sql_insert_exception_type = """INSERT INTO exception_type (name, module, docstring, hierarchy) 
                                    VALUES (?, ?, ?, ?)"""
-    cursor.execute(sql_insert_exception_type, (ex_name, ex_module, ex_docstring, ex_hierarchy))
+    cursor.execute(
+        sql_insert_exception_type, (ex_name, ex_module, ex_docstring, ex_hierarchy)
+    )
     conn.commit()
     cursor = conn.cursor()
-    cursor.execute("SELECT id FROM exception_type WHERE name = ? AND module = ?", (ex_name, ex_module))
+    cursor.execute(
+        "SELECT id FROM exception_type WHERE name = ? AND module = ?",
+        (ex_name, ex_module),
+    )
     data = cursor.fetchone()
     return data[0]
 
@@ -179,7 +202,9 @@ def create_exception_instance_table(conn: sqlite3.Connection) -> None:
     cursor.execute(sql_create_exception_instance_table)
 
 
-def insert_exception_instance(conn: sqlite3.Connection, record_id: str, ex: BaseException, comments: str = "") -> None:
+def insert_exception_instance(
+    conn: sqlite3.Connection, record_id: str, ex: BaseException, comments: str = ""
+) -> None:
     """Insert a new row into the exception_instance table"""
     ex_class = ex.__class__
     ex_name = ex_class.__name__
@@ -187,7 +212,10 @@ def insert_exception_instance(conn: sqlite3.Connection, record_id: str, ex: Base
 
     # Find the type_id from the exception_type table
     cursor = conn.cursor()
-    cursor.execute("SELECT id FROM exception_type WHERE name = ? AND module = ?", (ex_name, ex_module))
+    cursor.execute(
+        "SELECT id FROM exception_type WHERE name = ? AND module = ?",
+        (ex_name, ex_module),
+    )
     type_data = cursor.fetchone()
 
     if type_data is not None:
@@ -199,7 +227,10 @@ def insert_exception_instance(conn: sqlite3.Connection, record_id: str, ex: Base
         sql_insert_exception_instance = """INSERT INTO exception_instance 
                                            (record_id, type_id, args, str_repr, comments) 
                                            VALUES (?, ?, ?, ?, ?)"""
-        cursor.execute(sql_insert_exception_instance, (record_id, type_id, ex_args, ex_str_repr, comments))
+        cursor.execute(
+            sql_insert_exception_instance,
+            (record_id, type_id, ex_args, ex_str_repr, comments),
+        )
         conn.commit()
 
 
@@ -217,7 +248,9 @@ def create_traceback_info_table(conn: sqlite3.Connection) -> None:
     cursor.execute(sql_create_traceback_info_table)
 
 
-def insert_traceback_info(conn: sqlite3.Connection, exception_instance_id: str, tb) -> None:
+def insert_traceback_info(
+    conn: sqlite3.Connection, exception_instance_id: str, tb
+) -> None:
     """Insert traceback information for each frame"""
     cursor = conn.cursor()
     frame_number = 0
@@ -230,7 +263,10 @@ def insert_traceback_info(conn: sqlite3.Connection, exception_instance_id: str, 
         sql_insert_traceback_info = """INSERT INTO traceback_info 
                                        (exception_instance_id, frame_number, f_locals, f_globals) 
                                        VALUES (?, ?, ?, ?)"""
-        cursor.execute(sql_insert_traceback_info, (exception_instance_id, frame_number, f_locals, f_globals))
+        cursor.execute(
+            sql_insert_traceback_info,
+            (exception_instance_id, frame_number, f_locals, f_globals),
+        )
 
         tb = tb.tb_next
         frame_number += 1
@@ -254,7 +290,9 @@ if __name__ == "__main__":
                 insert_exception_type(conn, ex)
                 # Insert exception instance and get its ID
                 ex.add_note("Hello!")
-                insert_exception_instance(conn, "abc", ex, "Comments about the exception")
+                insert_exception_instance(
+                    conn, "abc", ex, "Comments about the exception"
+                )
                 cursor = conn.cursor()
                 cursor.execute("SELECT last_insert_rowid()")
                 exception_instance_id = cursor.fetchone()[0]
@@ -262,7 +300,6 @@ if __name__ == "__main__":
                 insert_traceback_info(conn, exception_instance_id, ex.__traceback__)
 
     run()
-
 ```
 
 ## File: generate_sql.py
@@ -271,6 +308,8 @@ if __name__ == "__main__":
 """
 Code to generate sql for table.
 """
+
+from __future__ import annotations
 
 import logging
 
@@ -298,12 +337,20 @@ def create_table_schemas(pico: bool) -> str:
     # we live with some duplication here.
 
     dummy_record = logging.LogRecord(
-        name="", level=logging.ERROR, pathname="", lineno=0, msg="", args=(), exc_info=None
+        name="",
+        level=logging.ERROR,
+        pathname="",
+        lineno=0,
+        msg="",
+        args=(),
+        exc_info=None,
     )
     for attr in dir(dummy_record):
         if not callable(getattr(dummy_record, attr)) and not attr.startswith("__"):
             attr_type = type(getattr(dummy_record, attr, ""))
-            sqlite_type = type_mapping.get(attr_type, "TEXT")  # Default to TEXT if type not in mapping
+            sqlite_type = type_mapping.get(
+                attr_type, "TEXT"
+            )  # Default to TEXT if type not in mapping
             columns.append(f"{attr} {sqlite_type}")
 
     # Add traceback column
@@ -321,7 +368,6 @@ def create_table_schemas(pico: bool) -> str:
 if __name__ == "__main__":
     print(create_table_schemas(True))
     print(create_table_schemas(False))
-
 ```
 
 ## File: handlers.py
@@ -331,13 +377,15 @@ if __name__ == "__main__":
 This module contains custom logging handlers.
 """
 
+from __future__ import annotations
+
 import logging
 import sqlite3
 import sys
 import traceback
 import uuid
 from importlib.resources import as_file, files
-from typing import Any, Optional
+from typing import Any
 
 from bug_trail_core.exceptions import (
     create_exception_instance_table,
@@ -358,7 +406,11 @@ class BaseErrorLogHandler:
     """
 
     def __init__(
-        self, db_path: str, pico: bool = False, minimum_level: int = logging.ERROR, single_threaded: bool = True
+        self,
+        db_path: str,
+        pico: bool = False,
+        minimum_level: int = logging.ERROR,
+        single_threaded: bool = True,
     ) -> None:
         """
         Initialize the handler
@@ -427,12 +479,22 @@ class BaseErrorLogHandler:
             columns = []
 
             dummy_record = logging.LogRecord(
-                name="", level=logging.ERROR, pathname="", lineno=0, msg="", args=(), exc_info=None
+                name="",
+                level=logging.ERROR,
+                pathname="",
+                lineno=0,
+                msg="",
+                args=(),
+                exc_info=None,
             )
             for attr in dir(dummy_record):
-                if not callable(getattr(dummy_record, attr)) and not attr.startswith("__"):
+                if not callable(getattr(dummy_record, attr)) and not attr.startswith(
+                    "__"
+                ):
                     attr_type = type(getattr(dummy_record, attr, ""))
-                    sqlite_type = type_mapping.get(attr_type, "TEXT")  # Default to TEXT if type not in mapping
+                    sqlite_type = type_mapping.get(
+                        attr_type, "TEXT"
+                    )  # Default to TEXT if type not in mapping
                     columns.append(f"{attr} {sqlite_type}")
 
             # Add traceback column
@@ -476,7 +538,9 @@ class BaseErrorLogHandler:
                 exception_instance_id = record_id
                 # Insert traceback info
                 if exception and exception.__traceback__:
-                    insert_traceback_info(self.conn, exception_instance_id, exception.__traceback__)
+                    insert_traceback_info(
+                        self.conn, exception_instance_id, exception.__traceback__
+                    )
         else:
             record.traceback = None
 
@@ -485,12 +549,20 @@ class BaseErrorLogHandler:
             # can change subtly from call to call.
             insert_sql = "INSERT INTO logs ({fields}) VALUES ({values})"
             self.field_names = ", ".join(
-                [attr for attr in dir(record) if not attr.startswith("__") and not attr == "getMessage"]
+                [
+                    attr
+                    for attr in dir(record)
+                    if not attr.startswith("__") and not attr == "getMessage"
+                ]
             )
             self.field_names = self.field_names + ", traceback, message"
             field_values = ", ".join(["?" for _ in self.field_names.split(", ")])
-            self.formatted_sql = insert_sql.format(fields="record_id," + self.field_names, values="?," + field_values)
-        args = [record_id] + [getattr(record, field, "") for field in self.field_names.split(", ")]
+            self.formatted_sql = insert_sql.format(
+                fields="record_id," + self.field_names, values="?," + field_values
+            )
+        args = [record_id] + [
+            getattr(record, field, "") for field in self.field_names.split(", ")
+        ]
         args = [serialize_to_sqlite_supported(arg) for arg in args]
 
         self.safe_execute(self.formatted_sql, args)
@@ -531,14 +603,21 @@ class BugTrailHandler(logging.Handler):
     A custom logging handler that logs to a SQLite database.
     """
 
-    def __init__(self, db_path: str, minimum_level: int = logging.ERROR, single_threaded: bool = True) -> None:
+    def __init__(
+        self,
+        db_path: str,
+        minimum_level: int = logging.ERROR,
+        single_threaded: bool = True,
+    ) -> None:
         """
         Initialize the handler
         Args:
             db_path (str): Path to the SQLite database
             single_threaded (bool): If True, the handler will close the connection after each emit.
         """
-        self.base_handler = BaseErrorLogHandler(db_path, minimum_level=minimum_level, single_threaded=single_threaded)
+        self.base_handler = BaseErrorLogHandler(
+            db_path, minimum_level=minimum_level, single_threaded=single_threaded
+        )
         super().__init__()
 
     def emit(self, record: logging.LogRecord) -> None:
@@ -556,17 +635,18 @@ class BugTrailHandler(logging.Handler):
         """
         self.base_handler.close()
         super().close()
-
 ```
 
 ## File: report_meta.py
 
 ```python
 """
-Reports all that ad hoc, folksonmy metadata that is used in Python packages and scripts.
+Reports all that ad hoc, folksonomy metadata that is used in Python packages and scripts.
 
 There is no standard but could be useful for diagnostics.
 """
+
+from __future__ import annotations
 
 import inspect
 import os
@@ -615,7 +695,7 @@ def get_meta(init_file):
     metadata = {}
 
     if init_file and os.path.isfile(init_file):
-        with open(init_file, "r") as file:
+        with open(init_file) as file:
             content = file.read()
 
         # Define a regex pattern to match metadata variables
@@ -630,9 +710,10 @@ def get_meta(init_file):
 if __name__ == "__main__":
 
     class CustomError(Exception):
-        pass
+        """Custom exception for demonstration purposes."""
 
     def run():
+        """Main function to demonstrate metadata extraction."""
         try:
             # ... some code that raises CustomError ...
             raise CustomError("An error occurred")
@@ -640,9 +721,15 @@ if __name__ == "__main__":
             module = get_module(ce)
             # is_pkg = is_package(module) # returns false even though it is in a package!
             # if not is_pkg:
-            # Get's file where declared.
+            # Gets file where declared.
             file = get_module_file(module)
-            for candidate in ["__init__.py", "__about__.py", "about.py", "__meta__.py", file]:
+            for candidate in [
+                "__init__.py",
+                "__about__.py",
+                "about.py",
+                "__meta__.py",
+                file,
+            ]:
                 init_file = get_init(module, candidate)
                 metadata = get_meta(init_file)
                 if metadata:
@@ -650,7 +737,6 @@ if __name__ == "__main__":
             print(metadata)
 
     run()
-
 ```
 
 ## File: sqlite3_utils.py
@@ -660,9 +746,11 @@ if __name__ == "__main__":
 Another module to avoid Circular Import
 """
 
+from __future__ import annotations
+
 import datetime
 import sqlite3
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 ALL_TABLES = [
     "exception_instance",
@@ -677,9 +765,9 @@ ALL_TABLES = [
 SqliteTypes = Union[None, int, float, str, bytes, datetime.date, datetime.datetime]
 
 
-def serialize_to_sqlite_supported(value: Optional[Any]) -> SqliteTypes:
+def serialize_to_sqlite_supported(value: Any | None) -> SqliteTypes:
     """
-    sqlite supports None, int, float, str, bytes by default, and also knows how to adapt datetime.date and datetime.datetime
+    Sqlite supports None, int, float, str, bytes by default, and also knows how to adapt datetime.date and datetime.datetime
     everything else is str(value)
     >>> serialize_to_sqlite_supported(1)
     1
@@ -712,7 +800,9 @@ def is_table_empty(conn: sqlite3.Connection, table_name: str) -> bool:
         raise TypeError("Bad table name.")
     try:
         cursor = conn.cursor()
-        cursor.execute(f"SELECT EXISTS(SELECT 1 FROM {table_name} LIMIT 1);")  # nosec: table checked above
+        cursor.execute(
+            f"SELECT EXISTS(SELECT 1 FROM {table_name} LIMIT 1);"
+        )  # nosec: table checked above
         return cursor.fetchone()[0] == 0
     except sqlite3.Error:
         return True  # Assuming empty if an error occurs
@@ -731,16 +821,23 @@ def truncate_table(conn: sqlite3.Connection, table_name: str) -> None:
     try:
         cursor = conn.cursor()
         cursor.execute(f"DELETE FROM {table_name};")  # nosec: table checked above
-        cursor.execute("VACUUM;")  # Optional: Cleans the database file, resetting auto-increment counters
+        cursor.execute(
+            "VACUUM;"
+        )  # Optional: Cleans the database file, resetting auto-increment counters
         conn.commit()
     except sqlite3.Error as e:
         print(f"An error occurred: {e}")
-
 ```
 
 ## File: system_info.py
 
 ```python
+"""
+System info for including with error logs
+"""
+
+from __future__ import annotations
+
 import json
 import platform
 from collections.abc import Sequence
@@ -749,16 +846,23 @@ import psutil
 
 
 def convert_bytes_to_gb(bytes_value: int) -> str:
+    """
+    Converts a byte value to gigabytes and formats it to two decimal places.
+    """
     gb_value = bytes_value / (1024**3)
     return f"{gb_value:.2f} GB"
 
 
 def convert_mhz_to_ghz(mhz_value: int) -> str:
+    """
+    Converts a frequency value from MHz to GHz and formats it to two decimal places.
+    """
     ghz_value = mhz_value / 1000
     return f"{ghz_value:.2f} GHz"
 
 
 def get_os_summary() -> dict[str, Sequence[str]]:
+    """Collects and returns a summary of the operating system information."""
     os_version = platform.version()
     os_platform = platform.system()
     os_release = platform.release()
@@ -777,6 +881,9 @@ def get_os_summary() -> dict[str, Sequence[str]]:
 
 
 def get_system_info() -> dict[str, str | Sequence[str]]:
+    """
+    Collects and returns system information including memory, CPU, disk space, and operating system details.
+    """
     # Memory information
     mem = psutil.virtual_memory()
     total_memory = convert_bytes_to_gb(mem.total)
@@ -822,6 +929,7 @@ if __name__ == "__main__":
 
 
 def create_system_info_table(conn):
+    """Creates the system_info table in the database if it does not exist."""
     sql_create_table = """CREATE TABLE IF NOT EXISTS system_info (
                               id TEXT PRIMARY KEY,
                               snapshot_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -842,6 +950,7 @@ def create_system_info_table(conn):
 
 
 def insert_system_info(conn, info):
+    """Inserts system information into the system_info table."""
     sql_insert_info = """INSERT INTO system_info 
                          (total_memory, available_memory, cpu_frequency, cpu_cores, 
                           total_disk_space, available_disk_space, os_platform, os_release, 
@@ -862,36 +971,53 @@ def insert_system_info(conn, info):
             info["Operating System Summary"]["Release"],
             info["Operating System Summary"]["Architecture"],
             info["Operating System Summary"]["Version"],
-            json.dumps(info["Operating System Summary"]["Windows Info"]),  # Store as JSON string
+            json.dumps(
+                info["Operating System Summary"]["Windows Info"]
+            ),  # Store as JSON string
         ),
     )
     conn.commit()
 
 
 def record_system_info(conn):
+    """Records system information into the database."""
     if conn is None:
         raise TypeError("Need live connection")
     create_system_info_table(conn)
     system_info = get_system_info()
     insert_system_info(conn, system_info)
-
 ```
 
 ## File: venv_info.py
 
 ```python
-import importlib.metadata
+"""
+Venv info for including with error logs.
+"""
+
 import json
 import sqlite3
 import uuid
 from collections.abc import Generator
+from contextlib import contextmanager
+from importlib import metadata
 from importlib.metadata import PackageMetadata
 from typing import cast
 
 
-def create_connection(db_file: str) -> sqlite3.Connection:
-    conn = sqlite3.connect(db_file)
-    return conn
+@contextmanager
+def create_connection(db_file: str) -> Generator[sqlite3.Connection, None, None]:
+    """
+    Establishes a connection to the SQLite database and ensures it's closed
+    properly using a context manager.
+    """
+    conn = None
+    try:
+        conn = sqlite3.connect(db_file)
+        yield conn
+    finally:
+        if conn:
+            conn.close()
 
 
 def create_python_libraries_table(conn: sqlite3.Connection) -> None:
@@ -910,17 +1036,21 @@ def create_python_libraries_table(conn: sqlite3.Connection) -> None:
     # cursor.execute("Delete from python_libraries;")
 
 
-def insert_python_library(conn: sqlite3.Connection, library_name: str, version: str, urls: dict[str, str]) -> None:
+def insert_python_library(
+    conn: sqlite3.Connection, library_name: str, version: str, urls: dict[str, str]
+) -> None:
     sql_insert_library = """INSERT INTO python_libraries (row_id, library_name, version, urls) 
                             VALUES (?, ?, ?, ?)"""
     cursor = conn.cursor()
     row_id = str(uuid.uuid4())
-    cursor.execute(sql_insert_library, (row_id, library_name, version, json.dumps(urls)))
+    cursor.execute(
+        sql_insert_library, (row_id, library_name, version, json.dumps(urls))
+    )
     conn.commit()
 
 
 def get_installed_packages() -> Generator[tuple[str, str, PackageMetadata], None, None]:
-    for package in importlib.metadata.distributions():
+    for package in metadata.distributions():
         yield package.metadata["Name"], package.version, package.metadata
 
 
@@ -928,10 +1058,14 @@ def record_venv_info(conn: sqlite3.Connection) -> None:
     if conn is None:
         raise TypeError("Need live connection")
     create_python_libraries_table(conn)
-    for name, version, metadata in get_installed_packages():
-        urls = {key: value for key, value in cast(dict, metadata).items() if value.strip().lower().startswith("http")}
-        if metadata.json:
-            kvs = metadata.json
+    for name, version, the_metadata in get_installed_packages():
+        urls = {
+            key: value
+            for key, value in cast(dict, the_metadata).items()
+            if value.strip().lower().startswith("http")
+        }
+        if the_metadata.json:
+            kvs = the_metadata.json
             project_url = kvs.get("project_url")
             if isinstance(project_url, list):
                 more_urls = {}
@@ -947,7 +1081,6 @@ def record_venv_info(conn: sqlite3.Connection) -> None:
             }
             urls.update(more_urls)
         insert_python_library(conn, name, version, urls)
-
 ```
 
 ## File: __about__.py
@@ -972,14 +1105,13 @@ __readme__ = "README.md"
 __requires_python__ = ">=3.9"
 __keywords__ = ["error logging", "html log report"]
 __status__ = "4 - Beta"
-
 ```
 
 ## File: __init__.py
 
 ```python
 """
-Captures error logs to sqlite. Compansion CLI tool generates a static website.
+Captures error logs to sqlite. Companion CLI tool generates a static website.
 
 Install bug_trail_core to your application. Pipx install bug_trail to avoid dependency
 conflicts
@@ -990,7 +1122,6 @@ from bug_trail_core.config import BugTrailConfig, read_config
 from bug_trail_core.handlers import BugTrailHandler
 
 __all__ = ["BugTrailHandler", "read_config", "BugTrailConfig", "__version__"]
-
 ```
 
 ## File: __main__.py
@@ -1000,9 +1131,11 @@ __all__ = ["BugTrailHandler", "read_config", "BugTrailConfig", "__version__"]
 Main entry point for the CLI.
 """
 
+from __future__ import annotations
+
 import argparse
 import sys
-from typing import Sequence
+from collections.abc import Sequence
 
 from bug_trail_core import read_config
 from bug_trail_core.__about__ import __version__
@@ -1015,9 +1148,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     Returns:
         int: 0 if successful, 1 if not
     """
-
     parser = argparse.ArgumentParser(
-        prog="bug_trail_core", description="Core library for bug_trail a tool for local logging and error reporting."
+        prog="bug_trail_core",
+        description="Core library for bug_trail a tool for local logging and error reporting.",
     )
 
     parser.add_argument(
@@ -1026,14 +1159,20 @@ def main(argv: Sequence[str] | None = None) -> int:
         help="Path to the configuration file (usually pyproject.toml)",
         required=False,
     )
-    parser.add_argument("--version", action="version", version="%(prog)s " + f"{__version__}")
+    parser.add_argument(
+        "--version", action="version", version="%(prog)s " + f"{__version__}"
+    )
 
     args = parser.parse_args(argv)
     if args.show_config:
-        print("This is the core library. Install or run bug_trail to generate the website to view the logs.\n")
+        print(
+            "This is the core library. Install or run bug_trail to generate the website to view the logs.\n"
+        )
         print(read_config(args.show_config))
     else:
-        print("This is the core library. Install or run bug_trail to generate the website to view the logs.\n")
+        print(
+            "This is the core library. Install or run bug_trail to generate the website to view the logs.\n"
+        )
         parser.print_help()
 
     return 0
@@ -1041,6 +1180,5 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-
 ```
 

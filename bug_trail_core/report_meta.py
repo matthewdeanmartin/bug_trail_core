@@ -3,7 +3,9 @@ Reports all that ad hoc, folksonomy metadata that is used in Python packages and
 
 There is no standard but could be useful for diagnostics.
 """
+
 from __future__ import annotations
+
 import inspect
 import os
 import re
@@ -67,7 +69,6 @@ if __name__ == "__main__":
 
     class CustomError(Exception):
         """Custom exception for demonstration purposes."""
-
 
     def run():
         """Main function to demonstrate metadata extraction."""

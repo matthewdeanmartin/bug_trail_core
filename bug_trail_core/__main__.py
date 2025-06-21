@@ -1,7 +1,9 @@
 """
 Main entry point for the CLI.
 """
+
 from __future__ import annotations
+
 import argparse
 import sys
 from collections.abc import Sequence

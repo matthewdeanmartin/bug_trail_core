@@ -1,22 +1,14 @@
 """
 Venv info for including with error logs.
 """
-from contextlib import contextmanager
-
-try:
-    from importlib import metadata
-    from importlib.metadata import PackageMetadata
-    is_39 = False
-except ImportError: # for Python<3.8 # noqa
-    is_39 = True
-    PackageMetadata = None
-    import importlib_metadata as metadata # noqa
 
 import json
 import sqlite3
 import uuid
 from collections.abc import Generator
-
+from contextlib import contextmanager
+from importlib import metadata
+from importlib.metadata import PackageMetadata
 from typing import cast
 
 
@@ -61,23 +53,20 @@ def insert_python_library(conn: sqlite3.Connection, library_name: str, version: 
 
 
 def get_installed_packages() -> Generator[tuple[str, str, PackageMetadata], None, None]:
-    if is_39:
-        yield from []
-    else:
-        for package in metadata.distributions():
-            yield package.metadata["Name"], package.version, package.metadata
+    for package in metadata.distributions():
+        yield package.metadata["Name"], package.version, package.metadata
 
 
 def record_venv_info(conn: sqlite3.Connection) -> None:
-    if is_39:
-        return
     if conn is None:
         raise TypeError("Need live connection")
     create_python_libraries_table(conn)
-    for name, version, metadata in get_installed_packages():
-        urls = {key: value for key, value in cast(dict, metadata).items() if value.strip().lower().startswith("http")}
-        if metadata.json:
-            kvs = metadata.json
+    for name, version, the_metadata in get_installed_packages():
+        urls = {
+            key: value for key, value in cast(dict, the_metadata).items() if value.strip().lower().startswith("http")
+        }
+        if the_metadata.json:
+            kvs = the_metadata.json
             project_url = kvs.get("project_url")
             if isinstance(project_url, list):
                 more_urls = {}

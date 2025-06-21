@@ -1,7 +1,9 @@
 """
 Record type, instance and call stack info about an exception.
 """
+
 from __future__ import annotations
+
 import json
 import sqlite3
 
