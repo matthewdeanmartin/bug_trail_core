@@ -1,9 +1,8 @@
 """
 Code to generate sql for table.
 """
-import logging
 
-import picologging
+import logging
 
 
 def create_table_schemas(pico: bool) -> str:
@@ -27,24 +26,15 @@ def create_table_schemas(pico: bool) -> str:
 
     # mypyc won't deal with a union of the 2 kinds of LogRecords, so
     # we live with some duplication here.
-    if pico:
-        dummy_pico_record = picologging.LogRecord(
-            name="", level=logging.ERROR, pathname="", lineno=0, msg="", args=(), exc_info=None
-        )
-        for attr in dir(dummy_pico_record):
-            if not callable(getattr(dummy_pico_record, attr)) and not attr.startswith("__"):
-                attr_type = type(getattr(dummy_pico_record, attr, ""))
-                sqlite_type = type_mapping.get(attr_type, "TEXT")  # Default to TEXT if type not in mapping
-                columns.append(f"{attr} {sqlite_type}")
-    else:
-        dummy_record = logging.LogRecord(
-            name="", level=logging.ERROR, pathname="", lineno=0, msg="", args=(), exc_info=None
-        )
-        for attr in dir(dummy_record):
-            if not callable(getattr(dummy_record, attr)) and not attr.startswith("__"):
-                attr_type = type(getattr(dummy_record, attr, ""))
-                sqlite_type = type_mapping.get(attr_type, "TEXT")  # Default to TEXT if type not in mapping
-                columns.append(f"{attr} {sqlite_type}")
+
+    dummy_record = logging.LogRecord(
+        name="", level=logging.ERROR, pathname="", lineno=0, msg="", args=(), exc_info=None
+    )
+    for attr in dir(dummy_record):
+        if not callable(getattr(dummy_record, attr)) and not attr.startswith("__"):
+            attr_type = type(getattr(dummy_record, attr, ""))
+            sqlite_type = type_mapping.get(attr_type, "TEXT")  # Default to TEXT if type not in mapping
+            columns.append(f"{attr} {sqlite_type}")
 
     # Add traceback column
     columns.append("traceback TEXT")

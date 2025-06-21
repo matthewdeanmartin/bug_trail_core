@@ -1,9 +1,10 @@
 """
 Another module to avoid Circular Import
 """
+
 import datetime
 import sqlite3
-from typing import Any, Optional, Union
+from typing import Any, Union
 
 ALL_TABLES = [
     "exception_instance",
@@ -18,9 +19,9 @@ ALL_TABLES = [
 SqliteTypes = Union[None, int, float, str, bytes, datetime.date, datetime.datetime]
 
 
-def serialize_to_sqlite_supported(value: Optional[Any]) -> SqliteTypes:
+def serialize_to_sqlite_supported(value: Any | None) -> SqliteTypes:
     """
-    sqlite supports None, int, float, str, bytes by default, and also knows how to adapt datetime.date and datetime.datetime
+    Sqlite supports None, int, float, str, bytes by default, and also knows how to adapt datetime.date and datetime.datetime
     everything else is str(value)
     >>> serialize_to_sqlite_supported(1)
     1

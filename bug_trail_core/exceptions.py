@@ -1,6 +1,7 @@
 """
 Record type, instance and call stack info about an exception.
 """
+
 import json
 import sqlite3
 

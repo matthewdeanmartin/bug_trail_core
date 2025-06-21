@@ -3,11 +3,11 @@ Reports all that ad hoc, folksonmy metadata that is used in Python packages and 
 
 There is no standard but could be useful for diagnostics.
 """
+
+import inspect
 import os
 import re
 import sys
-import inspect
-
 
 
 def get_module(exception):
@@ -17,16 +17,19 @@ def get_module(exception):
     module = sys.modules[module_name]
     return module
 
+
 def get_module_file(module):
     """Get the file associated with a module."""
     return inspect.getfile(module)
 
+
 def is_package(module):
     """Check if a module is a package."""
     module_file = get_module_file(module)
-    return os.path.basename(module_file) == '__init__.py'
+    return os.path.basename(module_file) == "__init__.py"
 
-def get_init(module, source_file:str):
+
+def get_init(module, source_file: str):
     """Get the __init__.py file of the module's package."""
     module_file = inspect.getfile(module)
     module_dir = os.path.dirname(module_file)
@@ -48,7 +51,7 @@ def get_meta(init_file):
     metadata = {}
 
     if init_file and os.path.isfile(init_file):
-        with open(init_file, 'r') as file:
+        with open(init_file) as file:
             content = file.read()
 
         # Define a regex pattern to match metadata variables
@@ -59,7 +62,9 @@ def get_meta(init_file):
             metadata[key] = value
     return metadata
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
+
     class CustomError(Exception):
         pass
 
@@ -72,13 +77,12 @@ if __name__ == '__main__':
             # is_pkg = is_package(module) # returns false even though it is in a package!
             # if not is_pkg:
             # Get's file where declared.
-            file  = get_module_file(module)
-            for candidate in [
-                "__init__.py", "__about__.py", "about.py", "__meta__.py",
-                file]:
+            file = get_module_file(module)
+            for candidate in ["__init__.py", "__about__.py", "about.py", "__meta__.py", file]:
                 init_file = get_init(module, candidate)
                 metadata = get_meta(init_file)
                 if metadata:
                     break
             print(metadata)
+
     run()

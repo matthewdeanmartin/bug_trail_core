@@ -5,8 +5,8 @@ Install bug_trail_core to your application. Pipx install bug_trail to avoid depe
 conflicts
 """
 
-from bug_trail_core._version import __version__
+from bug_trail_core.__about__ import __version__
 from bug_trail_core.config import BugTrailConfig, read_config
-from bug_trail_core.handlers import BugTrailHandler, PicoBugTrailHandler
+from bug_trail_core.handlers import BugTrailHandler
 
-__all__ = ["BugTrailHandler", "PicoBugTrailHandler", "read_config", "BugTrailConfig", "__version__"]
+__all__ = ["BugTrailHandler", "read_config", "BugTrailConfig", "__version__"]

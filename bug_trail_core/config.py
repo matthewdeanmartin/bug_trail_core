@@ -1,6 +1,7 @@
 """
 Configuration module for Bug Trail.
 """
+
 import os
 from dataclasses import dataclass
 

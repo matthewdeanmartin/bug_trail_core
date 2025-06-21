@@ -1,14 +1,14 @@
 """
 This module contains custom logging handlers.
 """
-import sys
 
 import logging
 import sqlite3
+import sys
 import traceback
 import uuid
 from importlib.resources import as_file, files
-from typing import Any, Optional
+from typing import Any
 
 from bug_trail_core.exceptions import (
     create_exception_instance_table,
@@ -21,13 +21,6 @@ from bug_trail_core.exceptions import (
 from bug_trail_core.sqlite3_utils import is_table_empty, serialize_to_sqlite_supported
 from bug_trail_core.system_info import create_system_info_table, record_system_info
 from bug_trail_core.venv_info import create_python_libraries_table, record_venv_info
-
-try:
-    import picologging
-
-    pico_available = True
-except NameError:
-    pico_available = False
 
 
 class BaseErrorLogHandler:
@@ -104,26 +97,14 @@ class BaseErrorLogHandler:
             # Build the columns schema based on LogRecord attributes
             columns = []
 
-            # mypyc won't deal with a union of the 2 kinds of LogRecords, so
-            # we live with some duplication here.
-            if self.pico:
-                dummy_pico_record = picologging.LogRecord(
-                    name="", level=logging.ERROR, pathname="", lineno=0, msg="", args=(), exc_info=None
-                )
-                for attr in dir(dummy_pico_record):
-                    if not callable(getattr(dummy_pico_record, attr)) and not attr.startswith("__"):
-                        attr_type = type(getattr(dummy_pico_record, attr, ""))
-                        sqlite_type = type_mapping.get(attr_type, "TEXT")  # Default to TEXT if type not in mapping
-                        columns.append(f"{attr} {sqlite_type}")
-            else:
-                dummy_record = logging.LogRecord(
-                    name="", level=logging.ERROR, pathname="", lineno=0, msg="", args=(), exc_info=None
-                )
-                for attr in dir(dummy_record):
-                    if not callable(getattr(dummy_record, attr)) and not attr.startswith("__"):
-                        attr_type = type(getattr(dummy_record, attr, ""))
-                        sqlite_type = type_mapping.get(attr_type, "TEXT")  # Default to TEXT if type not in mapping
-                        columns.append(f"{attr} {sqlite_type}")
+            dummy_record = logging.LogRecord(
+                name="", level=logging.ERROR, pathname="", lineno=0, msg="", args=(), exc_info=None
+            )
+            for attr in dir(dummy_record):
+                if not callable(getattr(dummy_record, attr)) and not attr.startswith("__"):
+                    attr_type = type(getattr(dummy_record, attr, ""))
+                    sqlite_type = type_mapping.get(attr_type, "TEXT")  # Default to TEXT if type not in mapping
+                    columns.append(f"{attr} {sqlite_type}")
 
             # Add traceback column
             columns.append("traceback TEXT")
@@ -201,54 +182,6 @@ class BaseErrorLogHandler:
         if not self.single_threaded:
             self.conn.close()
 
-    def pico_emit(self, record: picologging.LogRecord) -> None:
-        """
-        Insert a log record into the database
-
-        Args:
-            record (logging.LogRecord): The log record to be inserted
-        """
-        if record.levelno < self.minimum_level:
-            return
-        # Check if there is exception information
-        traceback_str: Optional[str] = None
-        # clientside primary key
-        record_id = str(uuid.uuid4())
-        if not record.exc_info:
-            record.exc_info = sys.exc_info()
-        # Check if there is exception information
-        if record.exc_info:
-            exception_type, exception, traceback_object = record.exc_info
-            # Format the traceback
-            traceback_str = "".join(traceback.format_exception(*record.exc_info))
-            record.traceback = traceback_str
-
-            if exception:
-                # not unique per log entry
-                insert_exception_type(self.conn, exception)
-                # unique per log entry
-                insert_exception_instance(self.conn, record_id, exception)
-                exception_instance_id = record_id
-                # Insert traceback info
-                if exception and exception.__traceback__:
-                    insert_traceback_info(self.conn, exception_instance_id, exception.__traceback__)
-        else:
-            record.traceback = None
-
-        if not self.formatted_sql:
-            insert_sql = "INSERT INTO logs ({fields}) VALUES ({values})"
-            self.field_names = ", ".join(
-                [attr for attr in dir(record) if not attr.startswith("__") and not attr == "getMessage"]
-            )
-            self.field_names = self.field_names + ", traceback"
-            field_values = ", ".join(["?" for _ in self.field_names.split(", ")])
-            self.formatted_sql = insert_sql.format(fields=self.field_names, values=field_values)
-        args = [getattr(record, field, "") for field in self.field_names.split(", ") if field != "traceback"]
-        args += [traceback_str]
-        args = [serialize_to_sqlite_supported(arg) for arg in args]
-
-        self.safe_execute(self.formatted_sql, args)
-
     def close(self) -> None:
         """
         Close the connection to the database
@@ -287,37 +220,6 @@ class BugTrailHandler(logging.Handler):
             record (logging.LogRecord): The log record to be inserted
         """
         self.base_handler.emit(record)
-
-    def close(self) -> None:
-        """
-        Close the connection to the database
-        """
-        self.base_handler.close()
-        super().close()
-
-
-class PicoBugTrailHandler(picologging.Handler):
-    """
-    A custom logging handler that logs to a SQLite database.
-    """
-
-    def __init__(self, db_path: str, minimum_level: int = logging.ERROR) -> None:
-        """
-        Initialize the handler
-        Args:
-            db_path (str): Path to the SQLite database
-        """
-        super().__init__()
-        self.base_handler = BaseErrorLogHandler(db_path, pico=True, minimum_level=minimum_level)
-
-    def emit(self, record: picologging.LogRecord) -> None:
-        """
-        Insert a log record into the database
-
-        Args:
-            record (logging.LogRecord): The log record to be inserted
-        """
-        self.base_handler.pico_emit(record)
 
     def close(self) -> None:
         """

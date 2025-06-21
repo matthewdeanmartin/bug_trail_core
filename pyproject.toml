@@ -1,8 +1,13 @@
-[tool.poetry]
+[project]
 name = "bug_trail_core"
-version = "2.3.0"
+version = "3.0.0"
 description = "Local static html error logger to use while developing python code."
-authors = ["Matthew Martin <matthewdeanmartin@gmail.com>"]
+authors = [
+    {name = "Matthew Martin", email = "matthewdeanmartin@gmail.com"},
+]
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.9"
 keywords = ["error logging", "html log report", ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -15,74 +20,51 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
 ]
-include = [
-    "bug_trail_core/**/*.py",
-    "bug_trail_core/**/*.sql",
-    "bug_trail_core/**/*.md",
-    "bug_trail_core/**/*.txt",
-    "bug_trail_core/**/*.html",
-    "bug_trail_core/**/*.jinja",
-    "bug_trail_core/py.typed",
+dependencies = [
+    "platformdirs",
+    "psutil",
 ]
-exclude = [
-]
-license = "MIT"
-readme = "README.md"
-repository = "https://github.com/matthewdeanmartin/bug_trail"
-homepage = "https://github.com/matthewdeanmartin/bug_trail"
-documentation = "https://github.com/matthewdeanmartin/bug_trail"
 
-[tool.poetry.urls]
+[dependency-groups]
+dev = [
+    "metametameta>=0.1.2",
+    "hatchling",
+    "types-python-dateutil",
+    "ruff>=0.12.0",
+    "pylint",
+    # types
+    "mypy",
+    "types-toml",
+    # testing tools
+    "pytest>=8.4.1",
+    "pytest-cov>=6.2.1",
+    "pytest-xdist>=3.5.0",
+    "pytest-randomly>=3.15.0",
+    "pytest-sugar>=0.9.7",
+    "pytest-mock",
+    "pytest-unused-fixtures",
+    "hypothesis>=6.135.14",
+    # docs
+    "interrogate>=1.5.0",
+    "pydoctest==0.2.1",
+    "pdoc3==0.11.6",
+    "mdformat==0.7.22",
+    "linkcheckmd>=1.4.0",
+    "codespell>=2.2.6",
+    "pyenchant>=3.2.2",
+
+]
+
+[project.urls]
 "Bug Tracker" = "https://github.com/matthewdeanmartin/bug_trail_core/issues"
 "Change Log" = "https://github.com/matthewdeanmartin/bug_trail_core/blob/main/CHANGES.md"
 
-# [tool.poetry.scripts]
+[project.scripts]
+bug_trail_core = "bug_trail_core.__main__:main"
 
-
-[tool.poetry.dependencies]
-python = ">=3.9"
-
-# Config
-toml = { version = "*", python = "<3.11" }
-platformdirs="*"
-
-# Gather system info
-psutil = "*"
-
-# Logging frameworks
-# Required until I figure out how to make it optional
-picologging = "*"
-
-[tool.poetry.dev-dependencies]
-
-# build tools
-black = ">=23.11.0"
-pytest = ">=7.4.3"
-pytest-cov = ">=4.1.0"
-pylint = ">=3.0.2"
-ruff = ">=0.1.9"
-
-# types
-mypy = ">=1.8.0"
-types-toml = "*"
-
-# more testing
-pytest-snapshot = ">=0.9.0"
-# pytest-asyncio = ">=0.23.2"
-#anyio = ">=4.2.0"
-#trio = ">=0.23.2"
-tox = "*"
-
-pre-commit = ">=3.5.0"
-scriv = ">=1.5.0"
-
-# docs
-interrogate = ">=1.5.0"
-#pydoctest = ">=0.1.22"
-pdoc3 = ">=0.10.0"
-#
-# contract
-# griffe = ">=0.38.1"
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [tool.black]
 line-length = 120
@@ -107,9 +89,6 @@ exclude = '''
                      # the root of the project
 )
 '''
-[build-system]
-requires = ["poetry>=0.12"]
-build-backend = "poetry.masonry.api"
 
 [tool.pytest.ini_options]
 minversion = "6.0"
@@ -121,9 +100,7 @@ junit_family = "xunit1"
 norecursedirs = ["vendor", "scripts"]
 # don't know how to do this in toml
 #addopts = "--strict-markers"
-#markers =
-#	slow: marks tests as slow (deselect with '-m "not slow"')
-#	fast: marks tests as fast (deselect with '-m "not fast"')
+
 
 [tool.isort]
 default_section = "THIRDPARTY"
@@ -185,29 +162,11 @@ target-version = "py311"
 [tool.ruff.lint.pydocstyle]
 convention = "google"
 
+
 [tool.scriv]
 version = "literal: pyproject.toml: tool.poetry.version"
 format = "md"
 main_branches = "master, main, develop, dev"
-
-[mypy]
-warn_return_any = true
-warn_unused_configs = true
-strict = true
-disallow_untyped_calls = true
-disallow_untyped_defs = true
-disallow_incomplete_defs = true
-check_untyped_defs = true
-strict_optional = true
-warn_redundant_casts = true
-warn_no_return = true
-
-[mypy.pygount]
-ignore_missing_imports = true
-
-[mypy.astor]
-ignore_missing_imports = true
-
 
 [tool.coverage.report]
 # Regexes for lines to exclude from consideration
@@ -227,6 +186,7 @@ exclude_also = [
     # Don't complain about abstract methods, they aren't run:
     "@(abc\\.)?abstractmethod",
     ]
+
 
 [tool.bug_trail]
 # Database in app_author/app_name/bug_trail.db

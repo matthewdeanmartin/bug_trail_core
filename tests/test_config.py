@@ -19,9 +19,10 @@ def test_read_config_full(tmp_path):
     config_file.write_text(config_content)
 
     # Mock platformdirs functions
-    with patch("platformdirs.user_data_dir") as mock_user_data_dir, patch(
-        "platformdirs.user_config_dir"
-    ) as mock_user_config_dir:
+    with (
+        patch("platformdirs.user_data_dir") as mock_user_data_dir,
+        patch("platformdirs.user_config_dir") as mock_user_config_dir,
+    ):
         mock_user_data_dir.return_value = "/default/data/dir"
         mock_user_config_dir.return_value = "/default/config/dir"
 
@@ -48,9 +49,10 @@ def test_read_config_partial(tmp_path):
     config_file.write_text(config_content)
 
     # Mock platformdirs functions
-    with patch("platformdirs.user_data_dir") as mock_user_data_dir, patch(
-        "platformdirs.user_config_dir"
-    ) as mock_user_config_dir:
+    with (
+        patch("platformdirs.user_data_dir") as mock_user_data_dir,
+        patch("platformdirs.user_config_dir") as mock_user_config_dir,
+    ):
         mock_user_data_dir.return_value = "/default/data/dir"
         mock_user_config_dir.return_value = "/default/config/dir"
 
@@ -72,9 +74,10 @@ def test_read_config_missing(tmp_path):
     config_file = tmp_path / "nonexistent.toml"
 
     # Mock platformdirs functions
-    with patch("platformdirs.user_data_dir") as mock_user_data_dir, patch(
-        "platformdirs.user_config_dir"
-    ) as mock_user_config_dir:
+    with (
+        patch("platformdirs.user_data_dir") as mock_user_data_dir,
+        patch("platformdirs.user_config_dir") as mock_user_config_dir,
+    ):
         mock_user_data_dir.return_value = "/default/data/dir"
         mock_user_config_dir.return_value = "/default/config/dir"
 
