@@ -199,4 +199,6 @@ app_name= "bug_trail"
 source_folder = "fish_tank"
 ctags_file = "fish_tank.tags"
 [tool.uv]
+
+[tool.uv.pip]
 universal = true
