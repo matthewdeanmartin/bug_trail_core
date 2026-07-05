@@ -31,7 +31,7 @@ dev = [
     "dont-be-lazy>=0.1.2; python_version >= '3.10'",
     "pydoc-fork>=3.0.0; python_version >= '3.10'",
 
-    "metametameta>=0.1.2",
+    "metametameta>=0.1.14",
     "hatchling",
     "types-python-dateutil",
     "ruff>=0.12.0",
