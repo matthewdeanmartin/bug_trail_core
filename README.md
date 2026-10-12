@@ -106,3 +106,10 @@ These are the closest "write logs to HTML" projects I could find:
 If you want someone else to do it all for you
 
 - [Sentry](https://sentry.io/)
+
+
+## Python 3.15 verification — 2026-10-04
+
+12 tests pass on 3.15.0rc3 with stable/prerelease dependencies and Python 3.14.7. Installed-wheel import and CLI help pass. No runtime change or new native fallback was needed. Full developer setup remains blocked by source-only linkcheckmd.
+
+Dependencies were installed only from published wheels; the project's own pure-Python wheel was built locally without build isolation. `uv lock --upgrade` refreshed the lock. No GitHub builds, releases or upstream reports were sent. Upstream bug filing is the human operator's job.
