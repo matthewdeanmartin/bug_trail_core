@@ -7,7 +7,7 @@ authors = [
 ]
 license = {text = "MIT"}
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 keywords = ["error logging", "html log report", ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -29,8 +29,8 @@ dependencies = [
 dev = [
     "jiggle-version>=2.1.0",
     "troml-dev-status>=0.6.0",
-    "dont-be-lazy>=0.1.2; python_version >= '3.10'",
-    "pydoc-fork>=3.0.0; python_version >= '3.10'",
+    "dont-be-lazy>=0.1.2",
+    "pydoc-fork>=3.0.0",
 
     "metametameta>=0.1.14",
     "hatchling",
@@ -73,7 +73,7 @@ build-backend = "hatchling.build"
 
 [tool.black]
 line-length = 120
-target-version = ['py39']
+target-version = ['py311']
 include = '\.pyi?$'
 exclude = '''
 
@@ -125,7 +125,7 @@ select = ["E", "F",
     "UP", # pyupgrade
     "B", # bugbear
 ]
-ignore = [
+ignore = ["RUF100", 
     "E722",
     # only track structural problems with docstrings, not whitespace, nor missing
     "D200", "D212", "D415","D411", "D205","D102", "D103", "D100","D107","D101","D104","D105",
